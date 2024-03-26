@@ -198,11 +198,12 @@ def main():
         deleteExtraneous(cal2, ignore_dtstamp=ignore_dtstamp)
         prettyDiff(cal1, cal2)
 
+
 version = "0.1"
 
 
 def getOptions():
-    ##### Configuration options #####
+    # Configuration options
 
     usage = "usage: %prog [options] ics_file1 ics_file2"
     parser = OptionParser(usage=usage, version=version)
@@ -219,6 +220,7 @@ def getOptions():
         return False, False
 
     return cmdline_options, args
+
 
 if __name__ == "__main__":
     try:

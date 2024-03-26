@@ -25,7 +25,7 @@ try:
         """
         Return byte string with correct encoding
         """
-        if type(s) == unicode:
+        if isinstance(s, unicode):
             return s.encode('utf-8')
         else:
             return str(s)
@@ -64,6 +64,7 @@ def to_basestring(s):
         return s
 
     return s.encode('utf-8')
+
 
 # ------------------------------------ Logging ---------------------------------
 logger = logging.getLogger(__name__)
@@ -389,12 +390,12 @@ class ContentLine(VBase):
         which are legal in IANA tokens.
         """
         if name.endswith('_param'):
-            if type(value) == list:
+            if isinstance(value, list):   # FIXME: should this be Sequence?
                 self.params[toVName(name, 6, True)] = value
             else:
                 self.params[toVName(name, 6, True)] = [value]
         elif name.endswith('_paramlist'):
-            if type(value) == list:
+            if isinstance(value, list):   # FIXME: should this be sequence?
                 self.params[toVName(name, 10, True)] = value
             else:
                 raise VObjectError("Parameter list set to a non-list")
@@ -429,7 +430,7 @@ class ContentLine(VBase):
     def __str__(self):
         try:
             return "<{0}{1}{2}>".format(self.name, self.params, self.valueRepr())
-        except UnicodeEncodeError as e:
+        except UnicodeEncodeError:
             return "<{0}{1}{2}>".format(self.name, self.params, self.valueRepr().encode('utf-8'))
 
     def __repr__(self):
@@ -540,7 +541,7 @@ class Component(VBase):
         which are legal in IANA tokens.
         """
         if name not in self.normal_attributes and name.lower() == name:
-            if type(value) == list:
+            if isinstance(value, list):   # FIXME: sequence?
                 if name.endswith('_list'):
                     name = name[:-5]
                 self.contents[toVName(name)] = value
@@ -815,6 +816,7 @@ def parseLine(line, lineNumber=None):
     return (match.group('name').replace('_', '-'),
             parseParams(match.group('params')),
             match.group('value'), match.group('group'))
+
 
 # logical line regular expressions
 

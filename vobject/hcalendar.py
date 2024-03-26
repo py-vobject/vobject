@@ -1,4 +1,4 @@
-"""
+r"""
 hCalendar: A microformat for serializing iCalendar data
           (http://microformats.org/wiki/hcalendar)
 
@@ -77,15 +77,15 @@ class HCalendar(VCalendar2_0):
             # DTSTART
             dtstart = event.getChildValue("dtstart")
             if dtstart:
-                if type(dtstart) == date:
+                if isinstance(dtstart, date):
                     timeformat = "%A, %B %e"
                     machine = "%Y%m%d"
-                elif type(dtstart) == datetime:
+                elif isinstance(dtstart, datetime):
                     timeformat = "%A, %B %e, %H:%M"
                     machine = "%Y%m%dT%H%M%S%z"
 
-                #TODO: Handle non-datetime formats?
-                #TODO: Spec says we should handle when dtstart isn't included
+                # TODO: Handle non-datetime formats?
+                # TODO: Spec says we should handle when dtstart isn't included
 
                 out('<abbr class="dtstart", title="{0!s}">{1!s}</abbr>\r\n'
                     .format(dtstart.strftime(machine),
@@ -97,12 +97,12 @@ class HCalendar(VCalendar2_0):
                     duration = event.getChildValue("duration")
                     if duration:
                         dtend = duration + dtstart
-                   # TODO: If lacking dtend & duration?
+                    # TODO: If lacking dtend & duration?
 
                 if dtend:
                     human = dtend
                     # TODO: Human readable part could be smarter, excluding repeated data
-                    if type(dtend) == date:
+                    if isinstance(dtend, date):
                         human = dtend - timedelta(days=1)
 
                     out('- <abbr class="dtend", title="{0!s}">{1!s}</abbr>\r\n'
@@ -126,5 +126,6 @@ class HCalendar(VCalendar2_0):
             out('</span>' + CRLF)  # close vevent
 
         return buf or outbuf.getvalue()
+
 
 registerBehavior(HCalendar)

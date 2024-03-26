@@ -171,15 +171,15 @@ class VCard3_0(VCardBehavior):
     isComponent = True
     sortFirst = ('version', 'prodid', 'uid')
     knownChildren = {
-        'N':          (0, 1, None),  # min, max, behaviorRegistry id
-        'FN':         (1, None, None),
-        'VERSION':    (1, 1, None),  # required, auto-generated
-        'PRODID':     (0, 1, None),
-        'LABEL':      (0, None, None),
-        'UID':        (0, None, None),
-        'ADR':        (0, None, None),
-        'ORG':        (0, None, None),
-        'PHOTO':      (0, None, None),
+        'N': (0, 1, None),  # min, max, behaviorRegistry id
+        'FN': (1, None, None),
+        'VERSION': (1, 1, None),  # required, auto-generated
+        'PRODID': (0, 1, None),
+        'LABEL': (0, None, None),
+        'UID': (0, None, None),
+        'ADR': (0, None, None),
+        'ORG': (0, None, None),
+        'PHOTO': (0, None, None),
         'CATEGORIES': (0, None, None)
     }
 
@@ -193,18 +193,26 @@ class VCard3_0(VCardBehavior):
         """
         if not hasattr(obj, 'version'):
             obj.add(ContentLine('VERSION', [], cls.versionString))
+
+
 registerBehavior(VCard3_0, default=True)
 
 
 class FN(VCardTextBehavior):
     name = "FN"
     description = 'Formatted name'
+    pass
+
+
 registerBehavior(FN)
 
 
 class Label(VCardTextBehavior):
     name = "Label"
     description = 'Formatted address'
+    pass
+
+
 registerBehavior(Label)
 
 wacky_apple_photo_serialize = True
@@ -220,7 +228,7 @@ class Photo(VCardTextBehavior):
         return " (BINARY PHOTO DATA at 0x{0!s}) ".format(id(line.value))
 
     @classmethod
-    def serialize(cls, obj, buf, lineLength, validate,  *args, **kwargs):
+    def serialize(cls, obj, buf, lineLength, validate, *args, **kwargs):
         """
         Apple's Address Book is *really* weird with images, it expects
         base64 data to have very specific whitespace.  It seems Address Book
@@ -229,6 +237,8 @@ class Photo(VCardTextBehavior):
         if wacky_apple_photo_serialize:
             lineLength = REALLY_LARGE
         VCardTextBehavior.serialize(obj, buf, lineLength, validate, *args, **kwargs)
+
+
 registerBehavior(Photo)
 
 
@@ -302,6 +312,8 @@ class NameBehavior(VCardBehavior):
         obj.isNative = False
         obj.value = serializeFields(obj.value, NAME_ORDER)
         return obj
+
+
 registerBehavior(NameBehavior, 'N')
 
 
@@ -330,6 +342,8 @@ class AddressBehavior(VCardBehavior):
         obj.isNative = False
         obj.value = serializeFields(obj.value, ADDRESS_ORDER)
         return obj
+
+
 registerBehavior(AddressBehavior, 'ADR')
 
 
@@ -360,4 +374,6 @@ class OrgBehavior(VCardBehavior):
         obj.isNative = False
         obj.value = serializeFields(obj.value)
         return obj
+
+
 registerBehavior(OrgBehavior, 'ORG')

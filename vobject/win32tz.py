@@ -14,10 +14,10 @@ WEEKS = datetime.timedelta(7)
 
 def list_timezones():
     """Return a list of all time zones known to the system."""
-    l = []
+    tz_list = []
     for i in xrange(parentsize):
-        l.append(_winreg.EnumKey(tzparent, i))
-    return l
+        tz_list.append(_winreg.EnumKey(tzparent, i))
+    return tz_list
 
 
 class win32tz(datetime.tzinfo):
@@ -96,7 +96,7 @@ class win32tz_data(object):
             self.dstname = keydict['Dlt']
             self.stdname = keydict['Std']
 
-            #see http://ww_winreg.jsiinc.com/SUBA/tip0300/rh0398.htm
+            # See http://ww_winreg.jsiinc.com/SUBA/tip0300/rh0398.htm
             tup = struct.unpack('=3l16h', keydict['TZI'])
             self.stdoffset = -tup[0] - tup[1]  # Bias + StandardBias * -1
             self.dstoffset = self.stdoffset - tup[2]  # + DaylightBias * -1
@@ -127,7 +127,7 @@ class win32tz_data(object):
             self.stdoffset = -keydict['Bias'] - keydict['StandardBias']
             self.dstoffset = self.stdoffset - keydict['DaylightBias']
 
-            #see http://ww_winreg.jsiinc.com/SUBA/tip0300/rh0398.htm
+            # See http://ww_winreg.jsiinc.com/SUBA/tip0300/rh0398.htm
             tup = struct.unpack('=8h', keydict['StandardStart'])
 
             offset = 0
@@ -155,8 +155,10 @@ def valuesToDict(key):
 
 
 def _test():
-    import win32tz, doctest
+    import doctest
+    import win32tz
     doctest.testmod(win32tz, verbose=0)
+
 
 if __name__ == '__main__':
     _test()
