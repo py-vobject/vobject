@@ -77,12 +77,12 @@ class HCalendar(VCalendar2_0):
             # DTSTART
             dtstart = event.getChildValue("dtstart")
             if dtstart:
-                if isinstance(dtstart, date):
-                    timeformat = "%A, %B %e"
-                    machine = "%Y%m%d"
-                elif isinstance(dtstart, datetime):
+                if isinstance(dtstart, datetime):
                     timeformat = "%A, %B %e, %H:%M"
                     machine = "%Y%m%dT%H%M%S%z"
+                elif isinstance(dtstart, date):
+                    timeformat = "%A, %B %e"
+                    machine = "%Y%m%d"
 
                 # TODO: Handle non-datetime formats?
                 # TODO: Spec says we should handle when dtstart isn't included

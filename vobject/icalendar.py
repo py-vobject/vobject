@@ -816,7 +816,7 @@ class DateOrDateTimeBehavior(behavior.Behavior):
         """
         Replace the date or datetime in obj.value with an ISO 8601 string.
         """
-        if isinstance(obj.value, datetime.date):
+        if isinstance(obj.value, datetime.date) and not isinstance(obj.value, datetime.datetime):
             obj.isNative = False
             obj.value_param = 'DATE'
             obj.value = dateToString(obj.value)
