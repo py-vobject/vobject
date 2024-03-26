@@ -1,4 +1,6 @@
 coverage
+flake8
+pylint
 python-dateutil >= 2.4.0
 setuptools
 wheel
