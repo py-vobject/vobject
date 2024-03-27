@@ -21,13 +21,13 @@ except NameError:
 # objects containing non-ascii characters
 try:
     # Should raise NameError on Python 3.x
-    unicode  # noqa
+    unicode  # noqa: F821
 
     def str_(s):
         """
         Return byte string with correct encoding
         """
-        if isinstance(s, unicode):
+        if isinstance(s, unicode):  # noqa: F821
             return s.encode('utf-8')
         else:
             return str(s)
@@ -69,7 +69,6 @@ def to_basestring(s):
         return s
 
     return s.encode("utf-8")
-
 
 
 # ------------------------------------ Logging ---------------------------------
@@ -842,7 +841,6 @@ def parseLine(line, lineNumber=None):
         match.group("value"),
         match.group("group"),
     )
-
 
 
 # logical line regular expressions
