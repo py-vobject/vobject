@@ -11,19 +11,19 @@ Compare VTODOs and VEVENTs in two iCalendar sources.
 
 def getSortKey(component):
     def getUID(component):
-        return component.getChildValue('uid', '')
+        return component.getChildValue("uid", "")
 
     # it's not quite as simple as getUID, need to account for recurrenceID and
     # sequence
 
     def getSequence(component):
-        sequence = component.getChildValue('sequence', 0)
+        sequence = component.getChildValue("sequence", 0)
         return "{0:05d}".format(int(sequence))
 
     def getRecurrenceID(component):
-        recurrence_id = component.getChildValue('recurrence_id', None)
+        recurrence_id = component.getChildValue("recurrence_id", None)
         if recurrence_id is None:
-            return '0000-00-00'
+            return "0000-00-00"
         else:
             return recurrence_id.isoformat()
 
@@ -42,9 +42,9 @@ def deleteExtraneous(component, ignore_dtstamp=False):
     for comp in component.components():
         deleteExtraneous(comp, ignore_dtstamp)
     for line in component.lines():
-        if 'X-VOBJ-ORIGINAL-TZID' in line.params:
-            del line.params['X-VOBJ-ORIGINAL-TZID']
-    if ignore_dtstamp and hasattr(component, 'dtstamp_list'):
+        if "X-VOBJ-ORIGINAL-TZID" in line.params:
+            del line.params["X-VOBJ-ORIGINAL-TZID"]
+    if ignore_dtstamp and hasattr(component, "dtstamp_list"):
         del component.dtstamp_list
 
 
@@ -118,14 +118,12 @@ def diff(left, right):
         for key in leftChildKeys:
             rightList = rightComp.contents.get(key, [])
             if isinstance(leftComp.contents[key][0], Component):
-                compDifference = processComponentLists(leftComp.contents[key],
-                                                       rightList)
+                compDifference = processComponentLists(leftComp.contents[key], rightList)
                 if len(compDifference) > 0:
                     differentComponents[key] = compDifference
 
             elif leftComp.contents[key] != rightList:
-                differentContentLines.append((leftComp.contents[key],
-                                              rightList))
+                differentContentLines.append((leftComp.contents[key], rightList))
 
         for key in rightChildKeys:
             if key not in leftChildKeys:
@@ -141,10 +139,10 @@ def diff(left, right):
             right = newFromBehavior(leftComp.name)
             # add a UID, if one existed, despite the fact that they'll always be
             # the same
-            uid = leftComp.getChildValue('uid')
+            uid = leftComp.getChildValue("uid")
             if uid is not None:
-                left.add('uid').value = uid
-                right.add('uid').value = uid
+                left.add("uid").value = uid
+                right.add("uid").value = uid
 
             for name, childPairList in differentComponents.items():
                 leftComponents, rightComponents = zip(*childPairList)
@@ -165,11 +163,13 @@ def diff(left, right):
 
             return left, right
 
-    vevents = processComponentLists(sortByUID(getattr(left, 'vevent_list', [])),
-                                    sortByUID(getattr(right, 'vevent_list', [])))
+    vevents = processComponentLists(
+        sortByUID(getattr(left, "vevent_list", [])), sortByUID(getattr(right, "vevent_list", []))
+    )
 
-    vtodos = processComponentLists(sortByUID(getattr(left, 'vtodo_list', [])),
-                                   sortByUID(getattr(right, 'vtodo_list', [])))
+    vtodos = processComponentLists(
+        sortByUID(getattr(left, "vtodo_list", [])), sortByUID(getattr(right, "vtodo_list", []))
+    )
 
     return vevents + vtodos
 
@@ -198,18 +198,25 @@ def main():
         deleteExtraneous(cal2, ignore_dtstamp=ignore_dtstamp)
         prettyDiff(cal1, cal2)
 
+
 version = "0.1"
 
 
 def getOptions():
-    ##### Configuration options #####
+    # ----Configuration options---- #
 
     usage = "usage: %prog [options] ics_file1 ics_file2"
     parser = OptionParser(usage=usage, version=version)
     parser.set_description("ics_diff will print a comparison of two iCalendar files ")
 
-    parser.add_option("-i", "--ignore-dtstamp", dest="ignore", action="store_true",
-                      default=False, help="ignore DTSTAMP lines [default: False]")
+    parser.add_option(
+        "-i",
+        "--ignore-dtstamp",
+        dest="ignore",
+        action="store_true",
+        default=False,
+        help="ignore DTSTAMP lines [default: False]",
+    )
 
     (cmdline_options, args) = parser.parse_args()
     if len(args) < 2:
@@ -219,6 +226,7 @@ def getOptions():
         return False, False
 
     return cmdline_options, args
+
 
 if __name__ == "__main__":
     try:
