@@ -44,9 +44,10 @@ class Behavior(object):
     @cvar allowGroup:
         Whether or not vCard style group prefixes are allowed.
     """
-    name = ''
-    description = ''
-    versionString = ''
+
+    name = ""
+    description = ""
+    versionString = ""
     knownChildren = {}
     quotedPrintable = False
     defaultBehavior = None
@@ -91,7 +92,7 @@ class Behavior(object):
                 if count.get(key, 0) < val[0]:
                     if raiseException:
                         m = "{0} components must contain at least {1} {2}"
-                        raise base.ValidateError(m .format(cls.name, val[0], key))
+                        raise base.ValidateError(m.format(cls.name, val[0], key))
                     return False
                 if val[1] and count.get(key, 0) > val[1]:
                     if raiseException:
@@ -106,6 +107,8 @@ class Behavior(object):
     @classmethod
     def lineValidate(cls, line, raiseException, complainUnrecognized):
         """Examine a line's parameters and values, return True if valid."""
+        # todo: remove used param line, raiseException, complainUnrecognized
+        print(line, raiseException, complainUnrecognized)
         return True
 
     @classmethod

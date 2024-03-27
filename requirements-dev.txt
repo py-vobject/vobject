@@ -11,3 +11,5 @@ setuptools
 sphinx
 twine
 wheel
+pre-commit
+black
