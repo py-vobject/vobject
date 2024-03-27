@@ -51,6 +51,9 @@ Repository = "https://github.com/py-vobject/vobject"
 Issues = "https://github.com/py-vobject/vobject/issues"
 Changelog = "https://github/com/py-vobject/vobject/blob/master/CHANGELOG.md"
 
+[tool.setuptools]
+packages = ["vobject"]
+
 [tool.setuptools.dynamic]
 version = {attr = "vobject.__version__"}
 
@@ -64,9 +67,12 @@ profile = "black"
 [tool.flake8]
 # Note: requires 'flake8.pyproject' module installed
 max-line-length = 80
-extend-select = "B950"
-extend-ignore = ["E203", "E501", "E701"]
+#extend-select = "B950"
+extend-ignore = ["E203", "E501", "E701", "B950"]
 
 [tool.distutils.bdist_wheel]
 # Request creation of a universal wheel (ie. py2.py3-none-any)
 universal = true
+
+[tool.black]
+target-version = ["py27", "py37", "py38", "py39", "py310"]

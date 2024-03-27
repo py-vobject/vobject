@@ -1,5 +1,6 @@
-black
+black[python2]==21.12b0
 build
+click==8.0.2
 coverage
 flake8
 flake8-bugbear
@@ -8,4 +9,5 @@ pylint
 python-dateutil >= 2.4.0
 setuptools
 sphinx
+twine
 wheel
