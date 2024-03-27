@@ -63,12 +63,16 @@ disable = ["C0103", "C0301"]
 
 [tool.isort]
 profile = "black"
+multi_line_output = 3
 
 [tool.flake8]
 # Note: requires 'flake8.pyproject' module installed
 max-line-length = 80
-#extend-select = "B950"
-extend-ignore = ["E203", "E501", "E701", "B950"]
+extend-ignore = ["B950", "E203", "E266", "E501", "E701", "W503"]
+exclude = [".git", "__pycache__", "venv*"]
+per_file_ignores = {
+    "*/__init__.py": ["F401"],
+}
 
 [tool.distutils.bdist_wheel]
 # Request creation of a universal wheel (ie. py2.py3-none-any)
