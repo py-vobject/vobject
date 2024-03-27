@@ -1,6 +1,11 @@
+black
+build
 coverage
 flake8
+flake8-bugbear
+flake8-pyproject
 pylint
 python-dateutil >= 2.4.0
 setuptools
+sphinx
 wheel
