@@ -60,6 +60,7 @@ version = {attr = "vobject.__version__"}
 [tool.pylint.format]
 max-line-length = "88"
 disable = ["C0103", "C0301"]
+py-version = "2.7"
 
 [tool.isort]
 profile = "black"
