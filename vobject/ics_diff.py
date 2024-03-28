@@ -2,7 +2,8 @@ from __future__ import print_function
 
 from optparse import OptionParser
 
-from .base import Component, getBehavior, newFromBehavior, readOne
+from vobject import __version__
+from vobject.base import Component, getBehavior, newFromBehavior, readOne
 
 """
 Compare VTODOs and VEVENTs in two iCalendar sources.
@@ -199,14 +200,11 @@ def main():
         prettyDiff(cal1, cal2)
 
 
-version = "0.1"
-
-
 def getOptions():
     # Configuration options
 
     usage = "usage: %prog [options] ics_file1 ics_file2"
-    parser = OptionParser(usage=usage, version=version)
+    parser = OptionParser(usage=usage, version=__version__)
     parser.set_description("ics_diff will print a comparison of two iCalendar files ")
 
     parser.add_option(

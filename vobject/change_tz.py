@@ -2,7 +2,7 @@
 
 from optparse import OptionParser
 
-from vobject import base, icalendar
+from vobject import base, icalendar, __version__
 
 try:
     import PyICU
@@ -70,14 +70,11 @@ def main():
         print("Done")
 
 
-version = "0.1"
-
-
 def get_options():
     # Configuration options
 
     usage = """usage: %prog [options] ics_file [timezone]"""
-    parser = OptionParser(usage=usage, version=version)
+    parser = OptionParser(usage=usage, version=__version__)
     parser.set_description("change_tz will convert the timezones in an ics file. ")
 
     parser.add_option(
