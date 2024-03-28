@@ -545,7 +545,6 @@ class RecurringComponent(Component):
                     except IndexError:
                         # it's conceivable that an rrule has 0 datetimes
                         added = False
-                    print(added)  # todo: remove unused vars
 
         return rruleset
 
@@ -1032,7 +1031,7 @@ class VCalendar2_0(VCalendarComponentBehavior):
             transformed = obj  # FIXME: never used
             undoTransform = False
         out = None
-        print(transformed, out)  # todo: remove unused vars
+
         outbuf = buf or six.StringIO()
         if obj.group is None:
             groupString = ""

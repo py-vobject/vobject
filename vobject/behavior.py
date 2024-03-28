@@ -107,8 +107,6 @@ class Behavior(object):
     @classmethod
     def lineValidate(cls, line, raiseException, complainUnrecognized):
         """Examine a line's parameters and values, return True if valid."""
-        # todo: remove used param line, raiseException, complainUnrecognized
-        print(line, raiseException, complainUnrecognized)
         return True
 
     @classmethod

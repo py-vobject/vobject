@@ -1,16 +1,18 @@
-from __future__ import print_function
-
-from optparse import OptionParser
-
-from vobject import __version__
-from vobject.base import Component, getBehavior, newFromBehavior, readOne
-
 """
 Compare VTODOs and VEVENTs in two iCalendar sources.
 """
 
+from __future__ import print_function
+
+from optparse import OptionParser  # pylint: disable=W4901
+
+from vobject import __version__
+from vobject.base import Component, newFromBehavior, readOne
+
 
 def getSortKey(component):
+    """Return a string sort-key for the component."""
+
     def getUID(component):
         return component.getChildValue("uid", "")
 
@@ -25,13 +27,14 @@ def getSortKey(component):
         recurrence_id = component.getChildValue("recurrence_id", None)
         if recurrence_id is None:
             return "0000-00-00"
-        else:
-            return recurrence_id.isoformat()
+
+        return recurrence_id.isoformat()
 
     return getUID(component) + getSequence(component) + getRecurrenceID(component)
 
 
 def sortByUID(components):
+    """Sort the components by UID."""
     return sorted(components, key=getSortKey)
 
 
@@ -81,9 +84,9 @@ def diff(left, right):
                     if rightIndex >= rightListSize:
                         output.append((comp, None))
                         break
-                    else:
-                        rightComp = rightList[rightIndex]
-                        rightKey = getSortKey(rightComp)
+
+                    rightComp = rightList[rightIndex]
+                    rightKey = getSortKey(rightComp)
 
                 if leftKey < rightKey:
                     output.append((comp, None))
@@ -94,15 +97,6 @@ def diff(left, right):
                         output.append(matchResult)
 
         return output
-
-    def newComponent(name, body):
-        if body is None:
-            return None
-        else:
-            c = Component(name)
-            c.behavior = getBehavior(name)
-            c.isNative = True
-            return c
 
     def processComponentPair(leftComp, rightComp):
         """
@@ -135,34 +129,34 @@ def diff(left, right):
 
         if len(differentContentLines) == 0 and len(differentComponents) == 0:
             return None
-        else:
-            left = newFromBehavior(leftComp.name)
-            right = newFromBehavior(leftComp.name)
-            # add a UID, if one existed, despite the fact that they'll always be
-            # the same
-            uid = leftComp.getChildValue("uid")
-            if uid is not None:
-                left.add("uid").value = uid
-                right.add("uid").value = uid
 
-            for name, childPairList in differentComponents.items():
-                leftComponents, rightComponents = zip(*childPairList)
-                if len(leftComponents) > 0:
-                    # filter out None
-                    left.contents[name] = filter(None, leftComponents)
-                if len(rightComponents) > 0:
-                    # filter out None
-                    right.contents[name] = filter(None, rightComponents)
+        left = newFromBehavior(leftComp.name)
+        right = newFromBehavior(leftComp.name)
+        # add a UID, if one existed, despite the fact that they'll always be
+        # the same
+        uid = leftComp.getChildValue("uid")
+        if uid is not None:
+            left.add("uid").value = uid
+            right.add("uid").value = uid
 
-            for leftChildLine, rightChildLine in differentContentLines:
-                nonEmpty = leftChildLine or rightChildLine
-                name = nonEmpty[0].name
-                if leftChildLine is not None:
-                    left.contents[name] = leftChildLine
-                if rightChildLine is not None:
-                    right.contents[name] = rightChildLine
+        for name, childPairList in differentComponents.items():
+            leftComponents, rightComponents = zip(*childPairList)
+            if len(leftComponents) > 0:
+                # filter out None
+                left.contents[name] = filter(None, leftComponents)
+            if len(rightComponents) > 0:
+                # filter out None
+                right.contents[name] = filter(None, rightComponents)
 
-            return left, right
+        for leftChildLine, rightChildLine in differentContentLines:
+            nonEmpty = leftChildLine or rightChildLine
+            name = nonEmpty[0].name
+            if leftChildLine is not None:
+                left.contents[name] = leftChildLine
+            if rightChildLine is not None:
+                right.contents[name] = rightChildLine
+
+        return left, right
 
     vevents = processComponentLists(
         sortByUID(getattr(left, "vevent_list", [])), sortByUID(getattr(right, "vevent_list", []))
@@ -176,6 +170,7 @@ def diff(left, right):
 
 
 def prettyDiff(leftObj, rightObj):
+    """Print prettily-formatted differences between left and right objects."""
     for left, right in diff(leftObj, rightObj):
         print("<<<<<<<<<<<<<<<")
         if left is not None:
@@ -184,28 +179,17 @@ def prettyDiff(leftObj, rightObj):
         if right is not None:
             right.prettyPrint()
         print(">>>>>>>>>>>>>>>")
-        print
-
-
-def main():
-    options, args = getOptions()
-    if args:
-        ignore_dtstamp = options.ignore
-        ics_file1, ics_file2 = args
-        with open(ics_file1) as f, open(ics_file2) as g:
-            cal1 = readOne(f)
-            cal2 = readOne(g)
-        deleteExtraneous(cal1, ignore_dtstamp=ignore_dtstamp)
-        deleteExtraneous(cal2, ignore_dtstamp=ignore_dtstamp)
-        prettyDiff(cal1, cal2)
+        print("")
 
 
 def getOptions():
-    # Configuration options
+    """Parse command line options.
+
+    @returns (options, remaining_args)"""
 
     usage = "usage: %prog [options] ics_file1 ics_file2"
     parser = OptionParser(usage=usage, version=__version__)
-    parser.set_description("ics_diff will print a comparison of two iCalendar files ")
+    parser.set_description("Print a comparison of two iCalendar files")
 
     parser.add_option(
         "-i",
@@ -219,11 +203,26 @@ def getOptions():
     (cmdline_options, args) = parser.parse_args()
     if len(args) < 2:
         print("error: too few arguments given")
-        print
+        print("")
         print(parser.format_help())
         return False, False
 
     return cmdline_options, args
+
+
+def main():
+    """Main function."""
+
+    options, args = getOptions()
+    if args:
+        ignore_dtstamp = options.ignore
+        ics_file1, ics_file2 = args
+        with open(ics_file1) as f, open(ics_file2) as g:
+            cal1 = readOne(f)
+            cal2 = readOne(g)
+        deleteExtraneous(cal1, ignore_dtstamp=ignore_dtstamp)
+        deleteExtraneous(cal2, ignore_dtstamp=ignore_dtstamp)
+        prettyDiff(cal1, cal2)
 
 
 if __name__ == "__main__":
