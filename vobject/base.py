@@ -20,13 +20,14 @@ except NameError:
 # One more problem ... in python2 the str operator breaks on unicode
 # objects containing non-ascii characters
 try:
-    unicode  # noqa # todo: check this
+    # Should raise NameError on Python 3.x
+    unicode  # noqa: F821
 
     def str_(s):
         """
         Return byte string with correct encoding
         """
-        if type(s) is unicode:  # noqa
+        if isinstance(s, unicode):  # noqa: F821
             return s.encode("utf-8")
         else:
             return str(s)
@@ -400,12 +401,12 @@ class ContentLine(VBase):
         which are legal in IANA tokens.
         """
         if name.endswith("_param"):
-            if type(value) is list:
+            if isinstance(value, list):   # FIXME: should this be Sequence?
                 self.params[toVName(name, 6, True)] = value
             else:
                 self.params[toVName(name, 6, True)] = [value]
         elif name.endswith("_paramlist"):
-            if type(value) is list:
+            if isinstance(value, list):   # FIXME: should this be Sequence?
                 self.params[toVName(name, 10, True)] = value
             else:
                 raise VObjectError("Parameter list set to a non-list")
@@ -551,7 +552,7 @@ class Component(VBase):
         which are legal in IANA tokens.
         """
         if name not in self.normal_attributes and name.lower() == name:
-            if type(value) is list:
+            if isinstance(value, list):   # FIXME: should this be Sequence?
                 if name.endswith("_list"):
                     name = name[:-5]
                 self.contents[toVName(name)] = value

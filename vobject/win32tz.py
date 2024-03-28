@@ -89,7 +89,7 @@ class win32tz_data(object):
             self.dstname = keydict["Dlt"]
             self.stdname = keydict["Std"]
 
-            # see http://ww_winreg.jsiinc.com/SUBA/tip0300/rh0398.htm
+            # See http://ww_winreg.jsiinc.com/SUBA/tip0300/rh0398.htm
             tup = struct.unpack("=3l16h", keydict["TZI"])
             self.stdoffset = -tup[0] - tup[1]  # Bias + StandardBias * -1
             self.dstoffset = self.stdoffset - tup[2]  # + DaylightBias * -1
@@ -120,7 +120,7 @@ class win32tz_data(object):
             self.stdoffset = -keydict["Bias"] - keydict["StandardBias"]
             self.dstoffset = self.stdoffset - keydict["DaylightBias"]
 
-            # see http://ww_winreg.jsiinc.com/SUBA/tip0300/rh0398.htm
+            # See http://ww_winreg.jsiinc.com/SUBA/tip0300/rh0398.htm
             tup = struct.unpack("=8h", keydict["StandardStart"])
 
             offset = 0
@@ -146,9 +146,7 @@ def valuesToDict(key):
 
 def _test():
     import doctest
-
     import win32tz
-
     doctest.testmod(win32tz, verbose=False)
 
 

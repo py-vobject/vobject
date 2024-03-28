@@ -1,0 +1,82 @@
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vobject"
+authors = [
+    {name = "Jeffrey Harris", email = "jeffrey@osafoundation.org"},
+]
+maintainers = [
+    {name = "David Arnold", email = "d+vobject@pobox.com"},
+]
+description = "A full-featured Python package for parsing and creating iCalendar and vCard files"
+readme = "README.md"
+requires-python = "== 2.7, >= 3.8"
+keywords = ["vobject", "icalendar", "vcard", "vcalendar", "ics", "vcs", "vcf", "hcalendar"]
+license = {file = "LICENSE-2.0.txt"}
+classifiers = [
+    # Convert 0.9.x to "6 - Mature" once v1.0 is out
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 2.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Text Processing",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "python-dateutil >= 2.4.0",
+    "six >= 1.16.0",
+]
+dynamic = ["version"]
+
+[project.scripts]
+ics_diff = "vobject.ics_diff:main"
+change_tz = "vobject.change_tz:main"
+
+[project.urls]
+Homepage = "https://py-vobject.github.io"
+Repository = "https://github.com/py-vobject/vobject"
+Issues = "https://github.com/py-vobject/vobject/issues"
+Changelog = "https://github/com/py-vobject/vobject/blob/master/CHANGELOG.md"
+
+[tool.setuptools]
+packages = ["vobject"]
+
+[tool.setuptools.dynamic]
+version = {attr = "vobject.__version__"}
+
+[tool.pylint.format]
+max-line-length = "88"
+disable = ["C0103", "C0301"]
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+
+[tool.flake8]
+# Note: requires 'flake8.pyproject' module installed
+max-line-length = 80
+extend-ignore = ["B950", "E203", "E266", "E501", "E701", "W503"]
+exclude = [".git", "__pycache__", "venv*"]
+per_file_ignores = [
+    "*/__init__.py: F401",
+]
+
+[tool.distutils.bdist_wheel]
+# Request creation of a universal wheel (ie. py2.py3-none-any)
+universal = true
+
+[tool.black]
+target-version = ["py27", "py37", "py38", "py39", "py310"]

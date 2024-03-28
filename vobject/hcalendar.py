@@ -1,4 +1,4 @@
-"""
+r"""
 hCalendar: A microformat for serializing iCalendar data
           (http://microformats.org/wiki/hcalendar)
 
@@ -77,12 +77,13 @@ class HCalendar(VCalendar2_0):
             # DTSTART
             dtstart = event.getChildValue("dtstart")
             if dtstart:
-                if type(dtstart) is date:
-                    timeformat = "%A, %B %e"
-                    machine = "%Y%m%d"
-                elif type(dtstart) is datetime:
+                # Careful of ordering: datetime derives from date, so MUST check it first.
+                if isinstance(dtstart, datetime):
                     timeformat = "%A, %B %e, %H:%M"
                     machine = "%Y%m%dT%H%M%S%z"
+                elif isinstance(dtstart, date):
+                    timeformat = "%A, %B %e"
+                    machine = "%Y%m%d"
 
                 # TODO: Handle non-datetime formats?
                 # TODO: Spec says we should handle when dtstart isn't included
@@ -99,12 +100,12 @@ class HCalendar(VCalendar2_0):
                     duration = event.getChildValue("duration")
                     if duration:
                         dtend = duration + dtstart
-                # TODO: If lacking dtend & duration?
+                    # FIXME: If lacking dtend & duration?
 
                 if dtend:
                     human = dtend
-                    # TODO: Human readable part could be smarter, excluding repeated data
-                    if type(dtend) is date:
+                    # FIXME: Human readable part could be smarter, excluding repeated data
+                    if isinstance(dtend, date):
                         human = dtend - timedelta(days=1)
 
                     out(

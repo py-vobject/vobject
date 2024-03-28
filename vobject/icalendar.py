@@ -331,8 +331,8 @@ class TimezoneComponent(Component):
                     endString = ";UNTIL=" + dateTimeToString(endDate)
                 else:
                     endString = ""
-                new_rule = "FREQ=YEARLY{0!s};BYMONTH={1!s}{2!s}".format(dayString, rule["month"], endString)
 
+                new_rule = "FREQ=YEARLY{0!s};BYMONTH={1!s}{2!s}".format(dayString, rule["month"], endString)
                 comp.add("rrule").value = new_rule
 
     tzinfo = property(gettzinfo, settzinfo)
@@ -445,9 +445,10 @@ class RecurringComponent(Component):
                         return None
 
                 if name in DATENAMES:
-                    if type(line.value[0]) is datetime.datetime:
+                    # Note: careful of order: datetime derives from date.
+                    if isinstance(line.value[0], datetime.datetime):
                         list(map(addfunc, line.value))
-                    elif type(line.value[0]) is datetime.date:
+                    elif isinstance(line.value[0], datetime.date):
                         for dt in line.value:
                             addfunc(datetime.datetime(dt.year, dt.month, dt.day))
                     else:
@@ -842,7 +843,8 @@ class DateOrDateTimeBehavior(behavior.Behavior):
         """
         Replace the date or datetime in obj.value with an ISO 8601 string.
         """
-        if type(obj.value) is datetime.date:
+        # Careful: datetime derives from date
+        if isinstance(obj.value, datetime.date) and not isinstance(obj.value, datetime.datetime):
             obj.isNative = False
             obj.value_param = "DATE"
             obj.value = dateToString(obj.value)
@@ -888,7 +890,7 @@ class MultiDateBehavior(behavior.Behavior):
         Replace the date, datetime or period tuples in obj.value with
         appropriate strings.
         """
-        if obj.value and type(obj.value[0]) is datetime.date:
+        if obj.value and isinstance(obj.value[0], datetime.date):
             obj.isNative = False
             obj.value_param = "DATE"
             obj.value = ",".join([dateToString(val) for val in obj.value])
@@ -900,7 +902,7 @@ class MultiDateBehavior(behavior.Behavior):
                 transformed = []
                 tzid = None
                 for val in obj.value:
-                    if tzid is None and type(val) is datetime.datetime:
+                    if tzid is None and isinstance(val, datetime.datetime):
                         tzid = TimezoneComponent.registerTzinfo(val.tzinfo)
                         if tzid is not None:
                             obj.tzid_param = tzid
@@ -1027,7 +1029,7 @@ class VCalendar2_0(VCalendarComponentBehavior):
             transformed = obj.transformFromNative()
             undoTransform = True
         else:
-            transformed = obj
+            transformed = obj  # FIXME: never used
             undoTransform = False
         out = None
         print(transformed, out)  # todo: remove unused vars
@@ -1048,7 +1050,6 @@ class VCalendar2_0(VCalendarComponentBehavior):
             ]
         except Exception:
             first_props = first_components = []
-            # first_components = []
 
         prop_keys = sorted(
             list(
@@ -1572,13 +1573,13 @@ class Trigger(behavior.Behavior):
 
     @staticmethod
     def transformFromNative(obj):
-        if type(obj.value) is datetime.datetime:
+        if isinstance(obj.value, datetime.datetime):
             obj.value_param = "DATE-TIME"
             return UTCDateTimeBehavior.transformFromNative(obj)
-        elif type(obj.value) is datetime.timedelta:
+        elif isinstance(obj.value, datetime.timedelta):
             return Duration.transformFromNative(obj)
         else:
-            raise NativeError("Native TRIGGER values must be timedelta or " "datetime")
+            raise NativeError("Native TRIGGER values must be timedelta or datetime")
 
 
 registerBehavior(Trigger)
@@ -1648,6 +1649,7 @@ class RRule(behavior.Behavior):
 registerBehavior(RRule, "RRULE")
 registerBehavior(RRule, "EXRULE")
 
+
 # ------------------------ Registration of common classes ----------------------
 utcDateTimeList = ["LAST-MODIFIED", "CREATED", "COMPLETED", "DTSTAMP"]
 list(map(lambda x: registerBehavior(UTCDateTimeBehavior, x), utcDateTimeList))
@@ -1690,7 +1692,7 @@ def numToDigits(num, places):
     if len(s) < places:
         return ("0" * (places - len(s))) + s
     elif len(s) > places:
-        return s[len(s) - places :]
+        return s[len(s) - places:]
     else:
         return s
 

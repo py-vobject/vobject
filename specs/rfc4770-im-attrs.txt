@@ -1,0 +1,395 @@
+
+
+
+
+
+
+Network Working Group                                        C. Jennings
+Request for Comments: 4770                                 Cisco Systems
+Category: Standards Track                                J. Reschke, Ed.
+                                                              greenbytes
+                                                            January 2007
+
+
+              vCard Extensions for Instant Messaging (IM)
+
+Status of This Memo
+
+   This document specifies an Internet standards track protocol for the
+   Internet community, and requests discussion and suggestions for
+   improvements.  Please refer to the current edition of the "Internet
+   Official Protocol Standards" (STD 1) for the standardization state
+   and status of this protocol.  Distribution of this memo is unlimited.
+
+Copyright Notice
+
+   Copyright (C) The IETF Trust (2007).
+
+Abstract
+
+   This document describes an extension to vCard to support Instant
+   Messaging (IM) and Presence Protocol (PP) applications.  IM and PP
+   are becoming increasingly common ways of communicating, and users
+   want to save this contact information in their address books.  It
+   allows a URI that is associated with IM or PP to be specified inside
+   a vCard.
+
+Table of Contents
+
+   1. Overview ........................................................2
+   2. IANA Considerations .............................................3
+   3. Formal Grammar ..................................................4
+   4. Example .........................................................4
+   5. Security Considerations .........................................4
+   6. Acknowledgments .................................................4
+   7. References ......................................................5
+      7.1. Normative References .......................................5
+      7.2. Informational References ...................................5
+
+
+
+
+
+
+
+
+
+
+Jennings & Reschke          Standards Track                     [Page 1]
+
+RFC 4770                       IMPP vCard                   January 2007
+
+
+1.  Overview
+
+   As more and more people use various instant messaging (IM) and
+   presence protocol (PP) applications, it becomes important for them to
+   be able to share this contact address information, along with the
+   rest of their contact information.  RFC 2425 [1] and RFC 2426 [2]
+   define a standard format for this information, which is referred to
+   as vCard.  This document defines a new type in a vCard for
+   representing instant IM and PP URIs.  It is very similar to existing
+   types for representing email address and telephone contact
+   information.
+
+   The type entry to hold this new contact information is an IMPP type.
+   The IMPP entry has a single URI (see RFC 3986 [3]) that indicates the
+   address of a service that provides IM, PP, or both.  Also defined are
+   some parameters that give hints as to when certain URIs would be
+   appropriate.  A given vCard can have multiple IMPP entries, but each
+   entry can contain only one URI.  Each IMPP entry can contain multiple
+   parameters.  Any combination of parameters is valid, although a
+   parameter should occur, at most, once in a given IMPP entry.
+
+   The type of URI indicates what protocols might be usable for
+   accessing it, but this document does not define any of the types.
+   For example, a URI type of
+
+   o  "sip" [5] indicates to use SIP/SIMPLE,
+   o  "xmpp" [6] indicates to use XMPP,
+   o  "irc" indicates to use IRC,
+   o  "ymsgr" indicates to use yahoo,
+   o  "msn" might indicate to use Microsoft messenger,
+   o  "aim" indicates to use AOL, and
+   o  "im" [7] or "pres" [8] indicates that a CPIM or CPP gateway should
+      be used.
+
+   The normative definition of this new vCard type is given in Section
+   2, and an informational ABNF is provided in Section 3.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Jennings & Reschke          Standards Track                     [Page 2]
+
+RFC 4770                       IMPP vCard                   January 2007
+
+
+2.  IANA Considerations
+
+   The required email to define this extension (as defined in RFC 2425
+   [1]) was sent on October 29, 2004, to the ietf-mime-direct@imc.org
+   mailing list with the subject "Registration of text/directory MIME
+   type IMPP" (see <http://www.imc.org/ietf-mime-direct/mail-
+   archive/msg00068.html>).
+
+   This specification updates the "text/directory MIME Types"
+   subregistry in the "text/directory MIME Registrations" registry at
+   http://www.iana.org/assignments/text-directory-registrations with the
+   following information:
+
+   Type name: IMPP
+
+   Type purpose: To specify the URI for instant messaging and presence
+   protocol communications with the object the vCard represents.
+
+   Type encoding: 8bit
+
+   Type value: A single URI.  The type of the URI indicates the protocol
+   that can be used for this contact.
+
+   Type special notes: The type may include the type parameter "TYPE" to
+   specify an intended use for the URI.  The TYPE parameter values
+   include one or more of the following:
+
+   o  An indication of the type of communication for which this URI is
+      appropriate.  This can be a value of PERSONAL or BUSINESS.
+
+   o  An indication of the location of a device associated with this
+      URI.  Values can be HOME, WORK, or MOBILE.
+
+   o  The value PREF indicates this is a preferred address and has the
+      same semantics as the PREF value in a TEL type.
+
+   Additional information can be found in RFC 4770.
+
+   Intended usage: COMMON
+
+
+
+
+
+
+
+
+
+
+
+
+Jennings & Reschke          Standards Track                     [Page 3]
+
+RFC 4770                       IMPP vCard                   January 2007
+
+
+3.  Formal Grammar
+
+   The following ABNF grammar [4] extends the grammar found in RFC 2425
+   [1] (Section 5.8.2) and RFC 2426 [2] (Section 4).
+
+   ;For name="IMPP"
+    param      = impp-param ; Only impp parameters are allowed
+
+    value      = URI
+                 ; URI defined in Section 3 of [3]
+
+    impp-param = "TYPE" "=" impp-type *("," impp-type)
+
+    impp-type  = "PERSONAL" / "BUSINESS" / ; purpose of communications
+                 "HOME" / "WORK" / "MOBILE" /
+                 "PREF" /
+                 iana-token / x-name;
+                 ; Values are case insensitive
+
+4.  Example
+
+   BEGIN:vCard
+   VERSION:3.0
+   FN:Alice Doe
+   IMPP;TYPE=personal,pref:im:alice@example.com
+   END:vCard
+
+5.  Security Considerations
+
+   This does not introduce additional security issues beyond the current
+   vCard specification.  It is worth noting that many people consider
+   their presence information more sensitive than other address
+   information.  Any system that stores or transfers vCards needs to
+   carefully consider the privacy issues around this information.
+
+6.  Acknowledgments
+
+   Thanks to Brian Carpenter, Lars Eggert, Ted Hardie, Paul Hoffman, Sam
+   Roberts, and Pekka Pessi for their comments.
+
+
+
+
+
+
+
+
+
+
+
+
+Jennings & Reschke          Standards Track                     [Page 4]
+
+RFC 4770                       IMPP vCard                   January 2007
+
+
+7.  References
+
+7.1.  Normative References
+
+
+   [1]  Howes, T., Smith, M., and F. Dawson, "A MIME Content-Type for
+        Directory Information", RFC 2425, September 1998.
+
+   [2]  Dawson, F. and T. Howes, "vCard MIME Directory Profile", RFC
+        2426, September 1998.
+
+   [3]  Berners-Lee, T., Fielding, R., and L. Masinter, "Uniform
+        Resource Identifier (URI): Generic Syntax", STD 66, RFC 3986,
+        January 2005.
+
+   [4]  Crocker, D., Ed. and P. Overell, "Augmented BNF for Syntax
+        Specifications: ABNF", RFC 4234, October 2005.
+
+7.2.  Informational References
+
+   [5]  Rosenberg, J., Schulzrinne, H., Camarillo, G., Johnston, A.,
+        Peterson, J., Sparks, R., Handley, M., and E. Schooler, "SIP:
+        Session Initiation Protocol", RFC 3261, June 2002.
+
+   [6]  Saint-Andre, P., "Internationalized Resource Identifiers (IRIs)
+        and Uniform Resource Identifiers (URIs) for the Extensible
+        Messaging and Presence Protocol (XMPP)", RFC 4622, July 2006.
+
+   [7]  Peterson, J., "Common Profile for Instant Messaging (CPIM)", RFC
+        3860, August 2004.
+
+   [8]  Peterson, J., "Common Profile for Presence (CPP)", RFC 3859,
+        August 2004.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Jennings & Reschke          Standards Track                     [Page 5]
+
+RFC 4770                       IMPP vCard                   January 2007
+
+
+Authors' Addresses
+
+   Cullen Jennings
+   Cisco Systems
+   170 West Tasman Drive
+   MS: SJC-21/2
+   San Jose, CA  95134
+   USA
+
+   Phone: +1 408 902-3341
+   EMail: fluffy@cisco.com
+
+
+   Julian F. Reschke (editor)
+   greenbytes GmbH
+   Hafenweg 16
+   Muenster, NW  48155
+   Germany
+
+   Phone: +49 251 2807760
+   EMail: julian.reschke@greenbytes.de
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Jennings & Reschke          Standards Track                     [Page 6]
+
+RFC 4770                       IMPP vCard                   January 2007
+
+
+Full Copyright Statement
+
+   Copyright (C) The IETF Trust (2007).
+
+   This document is subject to the rights, licenses and restrictions
+   contained in BCP 78, and except as set forth therein, the authors
+   retain all their rights.
+
+   This document and the information contained herein are provided on an
+   "AS IS" basis and THE CONTRIBUTOR, THE ORGANIZATION HE/SHE REPRESENTS
+   OR IS SPONSORED BY (IF ANY), THE INTERNET SOCIETY, THE IETF TRUST,
+   AND THE INTERNET ENGINEERING TASK FORCE DISCLAIM ALL WARRANTIES,
+   EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTY THAT
+   THE USE OF THE INFORMATION HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY
+   IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR
+   PURPOSE.
+
+Intellectual Property
+
+   The IETF takes no position regarding the validity or scope of any
+   Intellectual Property Rights or other rights that might be claimed to
+   pertain to the implementation or use of the technology described in
+   this document or the extent to which any license under such rights
+   might or might not be available; nor does it represent that it has
+   made any independent effort to identify any such rights.  Information
+   on the procedures with respect to rights in RFC documents can be
+   found in BCP 78 and BCP 79.
+
+   Copies of IPR disclosures made to the IETF Secretariat and any
+   assurances of licenses to be made available, or the result of an
+   attempt made to obtain a general license or permission for the use of
+   such proprietary rights by implementers or users of this
+   specification can be obtained from the IETF on-line IPR repository at
+   http://www.ietf.org/ipr.
+
+   The IETF invites any interested party to bring to its attention any
+   copyrights, patents or patent applications, or other proprietary
+   rights that may cover technology that may be required to implement
+   this standard.  Please address the information to the IETF at
+   ietf-ipr@ietf.org.
+
+Acknowledgement
+
+   Funding for the RFC Editor function is currently provided by the
+   Internet Society.
+
+
+
+
+
+
+Jennings & Reschke          Standards Track                     [Page 7]
+
