@@ -36,7 +36,7 @@ def get_test_file(path):
     """
     Helper function to open and read test files.
     """
-    filepath = f"test_files/{path}"
+    filepath = "test_files/{}".format(path)
     if sys.version_info[0] < 3:
         # On python 2, this library operates on bytes.
         f = open(filepath, "r")
@@ -93,7 +93,7 @@ class TestCalendarSerializing(unittest.TestCase):
             vevent = base.readOne(test_cal).vevent
             vevent2 = base.readOne(vevent.serialize())
             self.assertEqual(str(vevent), str(vevent2))
-            self.assertEqual(vevent.summary.value, "The title こんにちはキティ")
+            self.assertEqual(vevent.summary.value, u"The title こんにちはキティ")
 
     def test_wrapping(self):
         """
@@ -720,7 +720,7 @@ class TestIcalendar(unittest.TestCase):
 
         # Now add start and rule for recurring event
         vevent.add("dtstart").value = datetime.datetime(2005, 1, 19, 9)
-        vevent.add("rrule").value = "FREQ=WEEKLY;COUNT=2;INTERVAL=2;BYDAY=TU,TH"
+        vevent.add("rrule").value = u"FREQ=WEEKLY;COUNT=2;INTERVAL=2;BYDAY=TU,TH"
         self.assertEqual(
             list(vevent.rruleset), [datetime.datetime(2005, 1, 20, 9, 0), datetime.datetime(2005, 2, 1, 9, 0)]
         )

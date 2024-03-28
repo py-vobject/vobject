@@ -48,7 +48,7 @@ from .base import (
 DATENAMES = ("rdate", "exdate")
 RULENAMES = ("exrule", "rrule")
 DATESANDRULES = ("exrule", "rrule", "rdate", "exdate")
-PRODID = "-//PYVOBJECT//NONSGML Version 1//EN"
+PRODID = u"-//PYVOBJECT//NONSGML Version 1//EN"
 
 WEEKDAYS = "MO", "TU", "WE", "TH", "FR", "SA", "SU"
 FREQUENCIES = ("YEARLY", "MONTHLY", "WEEKLY", "DAILY", "HOURLY", "MINUTELY", "SECONDLY")
@@ -152,13 +152,13 @@ class TimezoneComponent(Component):
 
         def customSerialize(obj):
             if isinstance(obj, Component):
-                foldOneLine(buffer, "BEGIN:" + obj.name)
+                foldOneLine(buffer, u"BEGIN:" + obj.name)
                 for child in obj.lines():
                     if child.name.lower() in good_lines:
                         child.serialize(buffer, 75, validate=False)
                 for comp in obj.components():
                     customSerialize(comp)
-                foldOneLine(buffer, "END:" + obj.name)
+                foldOneLine(buffer, u"END:" + obj.name)
 
         customSerialize(self)
         buffer.seek(0)  # tzical wants to read a stream

@@ -448,7 +448,7 @@ class ContentLine(VBase):
         return self.__str__()
 
     def __unicode__(self):
-        return "<{0}{1}{2}>".format(self.name, self.params, self.valueRepr())
+        return u"<{0}{1}{2}>".format(self.name, self.params, self.valueRepr())
 
     def prettyPrint(self, level=0, tabwidth=3):
         pre = " " * level * tabwidth
