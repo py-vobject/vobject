@@ -10,6 +10,8 @@ from .icalendar import stringToTextValues
 
 
 class Name(object):
+    """A structured Name component."""
+
     def __init__(self, family="", given="", additional="", prefix="", suffix=""):
         """
         Each name attribute can be a string or a list of strings.
@@ -49,6 +51,8 @@ class Name(object):
 
 
 class Address(object):
+    """A structured address component."""
+
     def __init__(self, street="", city="", region="", code="", country="", box="", extended=""):
         """
         Each name attribute can be a string or a list of strings.
@@ -155,6 +159,8 @@ class VCardTextBehavior(behavior.Behavior):
 
 
 class VCardBehavior(behavior.Behavior):
+    """Base class for all vCard variants' behaviors."""
+
     allowGroup = True
     defaultBehavior = VCardTextBehavior
 
@@ -198,6 +204,7 @@ registerBehavior(VCard3_0, default=True)
 
 
 class FN(VCardTextBehavior):
+    """Behavior for Formatted Name (FN)."""
     name = "FN"
     description = "Formatted name"
 
@@ -206,6 +213,8 @@ registerBehavior(FN)
 
 
 class Label(VCardTextBehavior):
+    """Behavior for Label."""
+
     name = "Label"
     description = "Formatted address"
 
@@ -217,6 +226,7 @@ REALLY_LARGE = 1e50
 
 
 class Photo(VCardTextBehavior):
+    """Behavior for Photo."""
     name = "Photo"
     description = "Photograph"
 
@@ -240,21 +250,20 @@ registerBehavior(Photo)
 
 
 def toListOrString(string):
+    """Convert a string to a list of strings, if it has multiple elements."""
     stringList = stringToTextValues(string)
     if len(stringList) == 1:
         return stringList[0]
-    else:
-        return stringList
+    return stringList
 
 
 def splitFields(string):
-    """
-    Return a list of strings or lists from a Name or Address.
-    """
+    """Return a list of strings or lists from a Name or Address."""
     return [toListOrString(i) for i in stringToTextValues(string, listSeparator=";", charList=";")]
 
 
 def toList(stringOrList):
+    """If parameter is a string, return it as a single-element list."""
     if isinstance(stringOrList, basestring):
         return [stringOrList]
     return stringOrList
@@ -282,9 +291,7 @@ ADDRESS_ORDER = ("box", "extended", "street", "city", "region", "code", "country
 
 
 class NameBehavior(VCardBehavior):
-    """
-    A structured name.
-    """
+    """Behavior for Name."""
 
     hasNative = True
 
@@ -313,9 +320,7 @@ registerBehavior(NameBehavior, "N")
 
 
 class AddressBehavior(VCardBehavior):
-    """
-    A structured address.
-    """
+    """Behavior for Address."""
 
     hasNative = True
 
@@ -344,9 +349,7 @@ registerBehavior(AddressBehavior, "ADR")
 
 
 class OrgBehavior(VCardBehavior):
-    """
-    A list of organization values and sub-organization values.
-    """
+    """Behavior for Organization."""
 
     hasNative = True
 

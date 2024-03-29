@@ -12,11 +12,12 @@ URL:http://www.web2con.com/
 DTSTART:20051005
 DTEND:20051008
 SUMMARY:Web 2.0 Conference
-LOCATION:Argent Hotel, San Francisco, CA
+LOCATION:Argent Hotel\, San Francisco\, CA
 END:VEVENT
 END:VCALENDAR
 
-and an equivalent event in hCalendar format with various elements optimized appropriately.
+and an equivalent event in hCalendar format with various elements optimized
+appropriately.
 
 <span class="vevent">
  <a class="url" href="http://www.web2con.com/">
@@ -37,6 +38,8 @@ from .icalendar import VCalendar2_0
 
 
 class HCalendar(VCalendar2_0):
+    """hCalendar serialization."""
+
     name = "HCALENDAR"
 
     @classmethod

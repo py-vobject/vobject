@@ -142,6 +142,8 @@ class TimezoneComponent(Component):
         return tzid
 
     def gettzinfo(self):
+        """Convert a VTIMEZONE into a native dateutil timezone."""
+
         # workaround for dateutil failing to parse some experimental properties
         good_lines = ("rdate", "rrule", "dtstart", "tzname", "tzoffsetfrom", "tzoffsetto", "tzid")
         # serialize encodes as utf-8, cStringIO will leave utf-8 alone

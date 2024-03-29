@@ -1,3 +1,11 @@
+# vobject
+# Copyright (C) 2024, vObject Contributors.
+
+"""
+Behavior classes provide validation, encoding, and transformations for
+standardized components of vObjects.
+"""
+
 from . import base
 
 
@@ -79,9 +87,11 @@ class Behavior(object):
         if not cls.allowGroup and obj.group is not None:
             err = "{0} has a group, but this object doesn't support groups".format(obj)
             raise base.VObjectError(err)
+
         if isinstance(obj, base.ContentLine):
             return cls.lineValidate(obj, raiseException, complainUnrecognized)
-        elif isinstance(obj, base.Component):
+
+        if isinstance(obj, base.Component):
             count = {}
             for child in obj.getChildren():
                 if not child.validate(raiseException, complainUnrecognized):
@@ -100,9 +110,9 @@ class Behavior(object):
                         raise base.ValidateError(m.format(cls.name, val[1], key))
                     return False
             return True
-        else:
-            err = "{0} is not a Component or Contentline".format(obj)
-            raise base.VObjectError(err)
+
+        err = "{0} is not a Component or Contentline".format(obj)
+        raise base.VObjectError(err)
 
     @classmethod
     def lineValidate(cls, line, raiseException, complainUnrecognized):
@@ -111,11 +121,13 @@ class Behavior(object):
 
     @classmethod
     def decode(cls, line):
+        """Mark the line as decoded."""
         if line.encoded:
             line.encoded = 0
 
     @classmethod
     def encode(cls, line):
+        """Mark the line as encoded."""
         if not line.encoded:
             line.encoded = 1
 
@@ -139,8 +151,7 @@ class Behavior(object):
 
     @classmethod
     def generateImplicitParameters(cls, obj):
-        """Generate any required information that don't yet exist."""
-        pass
+        """Generate any required information that doesn't yet exist."""
 
     @classmethod
     def serialize(cls, obj, buf, lineLength, validate=True, *args, **kwargs):
