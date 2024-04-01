@@ -34,4 +34,3 @@ releases.
 
 With the possible exception of major releases, all contributions must
 maintain the existing API's syntax and semantics.  
-

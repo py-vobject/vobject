@@ -2,3 +2,5 @@ coverage
 python-dateutil >= 2.4.0
 setuptools
 wheel
+pre-commit
+black
