@@ -1,14 +1,13 @@
 """Translate an ics file's events to a different timezone."""
 
-from optparse import OptionParser
+from optparse import OptionParser  # pylint: disable=deprecated-module
+from datetime import datetime
 from vobject import icalendar, base
 
 try:
-    import PyICU
-except:
+    import PyICU  # pylint: disable=import-error
+except:  # pylint: disable=bare-except
     PyICU = None
-
-from datetime import datetime
 
 
 def change_tz(cal, new_timezone, default, utc_only=False, utc_tz=icalendar.utc):
@@ -25,14 +24,13 @@ def change_tz(cal, new_timezone, default, utc_only=False, utc_tz=icalendar.utc):
             utc_only=True
     """
 
-    for vevent in getattr(cal, 'vevent_list', []):
-        start = getattr(vevent, 'dtstart', None)
-        end = getattr(vevent, 'dtend', None)
+    for vevent in getattr(cal, "vevent_list", []):
+        start = getattr(vevent, "dtstart", None)
+        end = getattr(vevent, "dtend", None)
         for node in (start, end):
             if node:
                 dt = node.value
-                if (isinstance(dt, datetime) and
-                        (not utc_only or dt.tzinfo == utc_tz)):
+                if isinstance(dt, datetime) and (not utc_only or dt.tzinfo == utc_tz):
                     if dt.tzinfo is None:
                         dt = dt.replace(tzinfo=default)
                     node.value = dt.astimezone(new_timezone)
@@ -58,13 +56,14 @@ def main():
         else:
             timezone = PyICU.ICUtzinfo.default
         print("... Reading {0!s}".format(ics_file))
+        # pylint: disable=unspecified-encoding, consider-using-with
         cal = base.readOne(open(ics_file))
         change_tz(cal, timezone, PyICU.ICUtzinfo.default, utc_only)
 
-        out_name = ics_file + '.converted'
+        out_name = ics_file + ".converted"
         print("... Writing {0!s}".format(out_name))
 
-        with open(out_name, 'wb') as out:
+        with open(out_name, "wb") as out:
             cal.serialize(out)
 
         print("Done")
@@ -80,19 +79,32 @@ def get_options():
     parser = OptionParser(usage=usage, version=version)
     parser.set_description("change_tz will convert the timezones in an ics file. ")
 
-    parser.add_option("-u", "--only-utc", dest="utc", action="store_true",
-                      default=False, help="Only change UTC events.")
-    parser.add_option("-l", "--list", dest="list", action="store_true",
-                      default=False, help="List available timezones")
+    parser.add_option(
+        "-u",
+        "--only-utc",
+        dest="utc",
+        action="store_true",
+        default=False,
+        help="Only change UTC events.",
+    )
+    parser.add_option(
+        "-l",
+        "--list",
+        dest="list",
+        action="store_true",
+        default=False,
+        help="List available timezones",
+    )
 
     (cmdline_options, args) = parser.parse_args()
     if not args and not cmdline_options.list:
         print("error: too few arguments given")
-        print
+        print  # pylint: disable=pointless-statement
         print(parser.format_help())
         return False, False
 
     return cmdline_options, args
+
 
 if __name__ == "__main__":
     try:

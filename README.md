@@ -57,11 +57,49 @@ VObject requires Python 2.7 or higher, along with the [dateutil](https://pypi.py
 
 # Running tests
 
-To run all tests, use:
+To format code and run all tests before creating a git-commit, use:
 
+```bash
+$ make format pylint test
 ```
-python tests.py
+To run the Python 2.7 test use:
+
+```bash
+$ make clean venv2.7 test pylint2.7
 ```
+
+> [!CAUTION]
+> A python runtime that has [not yet reached EOL](https://endoflife.date/python) is required for development and testing!
+
+
+## Python 2.7
+
+If you want to test with Python 2.7 its recommended to manage runtime versions by [asdf](https://asdf-vm.com/).  If you have not installed, [download](https://asdf-vm.com/guide/getting-started.html#_2-download-asdf) and [install](https://asdf-vm.com/guide/getting-started.html#_3-install-asdf) asdf ([v0.14.0](https://github.com/asdf-vm/asdf/tags)):
+
+```bash
+$ git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.14.0
+$ echo '. "$HOME/.asdf/asdf.sh"' >> ~/.bashrc
+$ echo '. "$HOME/.asdf/completions/asdf.bash"' >> ~/.bashrc
+```
+
+Start a new shell and try to [install plugins](https://asdf-vm.com/guide/getting-started.html#install-the-plugin) / make sure you have the [required system dependencies](https://github.com/pyenv/pyenv/wiki#suggested-build-environment) installed before trying to install Python runtimes.
+
+```bash
+$ asdf update
+$ asdf plugin add python https://github.com/danhper/asdf-python.git
+$ asdf install python 2.7.18
+```
+
+Jump (`cd`) into vobject repos's root folder and configure asdf to use Python 2.7.18 in the vobject project.
+
+```bash
+$ cd /xyz/vobject/
+$ asdf local python 2.7.18
+$ python --version
+Python 2.7.18
+```
+
+With asdf you can install any (python) runtime, use `asdf list all python` to get a list of python runtimes available.  To use your system's Python in the vobject project use `asdf local python system`.
 
 
 # Usage

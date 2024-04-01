@@ -1,0 +1,29 @@
+# -*- coding: utf-8; mode: conf-unix -*-
+[MASTER]
+ignore=.git, .venv
+jobs=0
+
+[MESSAGES CONTROL]
+disable=duplicate-code,
+        missing-function-docstring,
+	missing-class-docstring,
+	missing-docstring,
+	too-few-public-methods,
+	too-many-arguments,
+	consider-using-f-string,
+	invalid-name,
+
+[FORMAT]
+max-line-length=120
+max-module-lines=2000
+expected-line-ending-format=LF
+
+[LOGGING]
+logging-modules=logging
+
+[MISCELLANEOUS]
+notes=
+
+[DESIGN]
+max-attributes=20
+

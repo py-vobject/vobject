@@ -10,3 +10,6 @@ venv/**/*
 *.sublime-*
 .coverage
 venv*
+
+.venv
+.tool-versions

@@ -1,8 +1,8 @@
 from . import base
 
 
-#------------------------ Abstract class for behavior --------------------------
-class Behavior(object):
+# ------------------------ Abstract class for behavior --------------------------
+class Behavior(object):  # pylint: disable=useless-object-inheritance
     """
     Behavior (validation, encoding, and transformations) for vobjects.
 
@@ -43,9 +43,12 @@ class Behavior(object):
     @cvar allowGroup:
         Whether or not vCard style group prefixes are allowed.
     """
-    name = ''
-    description = ''
-    versionString = ''
+
+    # pylint: disable=unused-argument
+
+    name = ""
+    description = ""
+    versionString = ""
     knownChildren = {}
     quotedPrintable = False
     defaultBehavior = None
@@ -77,9 +80,11 @@ class Behavior(object):
         if not cls.allowGroup and obj.group is not None:
             err = "{0} has a group, but this object doesn't support groups".format(obj)
             raise base.VObjectError(err)
+
         if isinstance(obj, base.ContentLine):
             return cls.lineValidate(obj, raiseException, complainUnrecognized)
-        elif isinstance(obj, base.Component):
+
+        if isinstance(obj, base.Component):
             count = {}
             for child in obj.getChildren():
                 if not child.validate(raiseException, complainUnrecognized):
@@ -90,7 +95,7 @@ class Behavior(object):
                 if count.get(key, 0) < val[0]:
                     if raiseException:
                         m = "{0} components must contain at least {1} {2}"
-                        raise base.ValidateError(m .format(cls.name, val[0], key))
+                        raise base.ValidateError(m.format(cls.name, val[0], key))
                     return False
                 if val[1] and count.get(key, 0) > val[1]:
                     if raiseException:
@@ -98,9 +103,9 @@ class Behavior(object):
                         raise base.ValidateError(m.format(cls.name, val[1], key))
                     return False
             return True
-        else:
-            err = "{0} is not a Component or Contentline".format(obj)
-            raise base.VObjectError(err)
+
+        err = "{0} is not a Component or Contentline".format(obj)
+        raise base.VObjectError(err)
 
     @classmethod
     def lineValidate(cls, line, raiseException, complainUnrecognized):
@@ -141,7 +146,16 @@ class Behavior(object):
         pass
 
     @classmethod
-    def serialize(cls, obj, buf, lineLength, validate=True, *args, **kwargs):
+    def serialize(
+        # pylint: disable=keyword-arg-before-vararg
+        cls,
+        obj,
+        buf,
+        lineLength,
+        validate=True,
+        *args,
+        **kwargs
+    ):
         """
         Set implicit parameters, do encoding, return unicode string.
 
@@ -151,7 +165,6 @@ class Behavior(object):
         Default is to call base.defaultSerialize.
 
         """
-
         cls.generateImplicitParameters(obj)
         if validate:
             cls.validate(obj, raiseException=True)

@@ -14,8 +14,15 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install Requirements
         run: |
-          python -m pip install --upgrade pip setuptools wheel
-          pip install -r requirements-dev.txt
+          make venv
       - name: Run Tests
         run: |
-          python tests.py
+          case ${{ matrix.python-version }} in
+              3.7)
+                  echo "WARNING: skip pylint and black test in python 3.7"
+                  make test
+                  ;;
+              *)
+                  make black pylint test
+                  ;;
+          esac
