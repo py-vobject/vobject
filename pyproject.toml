@@ -9,6 +9,7 @@ maintainers = [
     { name = "David Arnold", email = "davida@pobox.com" },
 ]
 license = { text = "Apache" }
+readme = "README.md"
 
 keywords = ["vobject", "icalendar", "vcard", "ics", "vcs", "hcalendar"]
 classifiers = [
