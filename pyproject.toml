@@ -44,7 +44,7 @@ change_tz = "vobject.change_tz:main"
 
 [tool.setuptools]
 include-package-data = true
-packages = ["vobject", "test_files"]
+packages = ["vobject"]
 platforms = ["any"]
 
 [build-system]
