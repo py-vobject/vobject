@@ -1,0 +1,39 @@
+[project]
+name = "vobject"
+version = "0.9.7"
+description = "A full-featured Python package for parsing and creating iCalendar and vCard files"
+authors = [
+    { name = "Jeffrey Harris", email = "jeffrey@osafoundation.org" },
+]
+maintainers = [
+    { name = "David Arnold", email = "davida@pobox.com" },
+]
+license = { text = "Apache" }
+
+keywords = ["vobject", "icalendar", "vcard", "ics", "vcs", "hcalendar"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 2.7",
+    "Programming Language :: Python :: 3",
+    "Topic :: Text Processing",
+]
+
+[project.urls]
+Homepage = "http://py-vobject.github.io/vobject/"
+Repository = "https://github.com/py-vobject/vobject.git"
+Download = 'https://github.com/py-vobject/vobject/releases'
+Issues = "https://github.com/py-vobject/vobject/issues"
+
+[project.scripts]
+ics_diff = "vobject.ics_diff:main"
+change_tz = "vobject.change_tz:main"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
