@@ -25,6 +25,13 @@ classifiers = [
     "Topic :: Text Processing",
 ]
 
+dependencies = [
+    "python-dateutil >= 2.5.0; python_version < '3.10'",
+    "python-dateutil >= 2.7.0; python_version >= '3.10'",
+    "pytz",
+    "six",
+]
+
 [project.urls]
 Homepage = "http://py-vobject.github.io/vobject/"
 Repository = "https://github.com/py-vobject/vobject.git"
@@ -34,6 +41,10 @@ Issues = "https://github.com/py-vobject/vobject/issues"
 [project.scripts]
 ics_diff = "vobject.ics_diff:main"
 change_tz = "vobject.change_tz:main"
+
+[tool.setuptools]
+include-package-data = true
+platforms = ["any"]
 
 [build-system]
 requires = ["setuptools>=61.0"]
