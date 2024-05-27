@@ -528,6 +528,14 @@ class TestVcards(unittest.TestCase):
             self.assertEqual(new_card.org.value, card.org.value)
             card = new_card
 
+    def test_photo_serialization(self):
+        """
+        Test for AOSP (Android) exported with attached photos
+        """
+        test_file = get_test_file("photo-test.vcf")
+        card = base.readOne(test_file)
+        serialized = card.serialize()
+
 
 class TestIcalendar(unittest.TestCase):
     """
