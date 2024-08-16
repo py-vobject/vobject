@@ -1,6 +1,6 @@
 [project]
 name = "vobject"
-version = "0.9.7"
+dynamic = ["version"]
 description = "A full-featured Python package for parsing and creating iCalendar and vCard files"
 authors = [
     { name = "Jeffrey Harris", email = "jeffrey@osafoundation.org" },
@@ -46,6 +46,9 @@ change_tz = "vobject.change_tz:main"
 include-package-data = true
 packages = ["vobject"]
 platforms = ["any"]
+
+[tool.setuptools.dynamic]
+version = {attr = "vobject.VERSION"}
 
 [build-system]
 requires = ["setuptools>=61.0"]
