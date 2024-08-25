@@ -8,7 +8,7 @@ authors = [
 maintainers = [
     { name = "David Arnold", email = "davida@pobox.com" },
 ]
-license = { text = "Apache" }
+license = { file = "LICENSE-2.0.txt" }
 readme = "README.md"
 
 keywords = ["vobject", "icalendar", "vcard", "ics", "vcs", "hcalendar"]
