@@ -76,9 +76,13 @@ VObject Overview
 
 """
 
-from .base import newFromBehavior, readOne, readComponents
-from . import icalendar, vcard
-
+from . import (
+        icalendar as icalendar,
+        vcard as vcard)
+from .base import (
+        newFromBehavior,
+        readComponents as readComponents,
+        readOne as readOne)
 
 # Package version
 VERSION = "0.9.9"
