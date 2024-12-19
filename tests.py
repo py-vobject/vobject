@@ -703,7 +703,7 @@ class TestIcalendar(unittest.TestCase):
         def unregister_tzid(tzid):
             """Clear tzid from icalendar TZID registry"""
             if icalendar.getTzid(tzid, False):
-                icalendar.registerTzid(tzid, None)
+                icalendar.registerTzid(tzid, tzutc())
 
         unregister_tzid('US/Eastern')
         eastern = pytz.timezone('US/Eastern')
