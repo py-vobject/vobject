@@ -20,10 +20,10 @@ def str_(s):
 
 
 def to_unicode(value):
-    """Converts a string argument to a unicode string.
+    """Converts a string argument to a Unicode string.
 
-    If the argument is already a unicode string, it is returned unchanged.
-    Otherwise it must be a byte string and is decoded as utf8.
+    If the argument is already a Unicode string, it is returned unchanged.
+    Otherwise, it must be a byte string and is decoded as utf8.
     """
     return value if isinstance(value, unicode_type) else value.decode("utf-8")
 
@@ -32,7 +32,7 @@ def to_basestring(s):
     """Converts a string argument to a byte string.
 
     If the argument is already a byte string, it is returned unchanged.
-    Otherwise it must be a unicode string and is encoded as utf8.
+    Otherwise, it must be a Unicode string and is encoded as utf8.
     """
     return s if isinstance(s, bytes) else s.encode("utf-8")
 
@@ -419,7 +419,7 @@ class Component(VBase):
         are the lowercased names of child ContentLines or Components.
         Note that BEGIN and END ContentLines are not included in contents.
     @ivar name:
-        Uppercase string used to represent this Component, i.e VCARD if the
+        Uppercase string used to represent this Component, i.e. VCARD if the
         serialized object starts with BEGIN:VCARD.
     @ivar useBegin:
         A boolean flag determining whether BEGIN: and END: lines should
@@ -897,7 +897,7 @@ def dquoteEscape(param):
 
 def foldOneLine(outbuf, input_, lineLength=75):
     """
-    Folding line procedure that ensures multi-byte utf-8 sequences are not
+    Folding line procedure that ensures multibyte utf-8 sequences are not
     broken across lines
 
     TO-DO: This all seems odd. Is it still needed, especially in python3?
