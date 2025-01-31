@@ -237,7 +237,7 @@ class Photo(VCardTextBehavior):
         return f" (BINARY PHOTO DATA at 0x{id(line.value)}) "
 
     @classmethod
-    def serialize(cls, obj, buf, lineLength, validate, *args, **kwargs):
+    def serialize(cls, obj, buf, lineLength, validate=True, *args, **kwargs):
         """
         Apple's Address Book is *really* weird with images, it expects
         base64 data to have very specific whitespace.  It seems Address Book
@@ -300,8 +300,8 @@ class NameBehavior(VCardBehavior):
 
     hasNative = True
 
-    @staticmethod
-    def transformToNative(obj):
+    @classmethod
+    def transformToNative(cls, obj):
         """
         Turn obj.value into a Name.
         """
@@ -311,8 +311,8 @@ class NameBehavior(VCardBehavior):
         obj.value = Name(**dict(zip(NAME_ORDER, splitFields(obj.value))))
         return obj
 
-    @staticmethod
-    def transformFromNative(obj):
+    @classmethod
+    def transformFromNative(cls, obj):
         """
         Replace the Name in obj.value with a string.
         """
@@ -331,8 +331,8 @@ class AddressBehavior(VCardBehavior):
 
     hasNative = True
 
-    @staticmethod
-    def transformToNative(obj):
+    @classmethod
+    def transformToNative(cls, obj):
         """
         Turn obj.value into an Address.
         """
@@ -342,8 +342,8 @@ class AddressBehavior(VCardBehavior):
         obj.value = Address(**dict(zip(ADDRESS_ORDER, splitFields(obj.value))))
         return obj
 
-    @staticmethod
-    def transformFromNative(obj):
+    @classmethod
+    def transformFromNative(cls, obj):
         """
         Replace the Address in obj.value with a string.
         """
@@ -362,8 +362,8 @@ class OrgBehavior(VCardBehavior):
 
     hasNative = True
 
-    @staticmethod
-    def transformToNative(obj):
+    @classmethod
+    def transformToNative(cls, obj):
         """
         Turn obj.value into a list.
         """
@@ -373,8 +373,8 @@ class OrgBehavior(VCardBehavior):
         obj.value = splitFields(obj.value)
         return obj
 
-    @staticmethod
-    def transformFromNative(obj):
+    @classmethod
+    def transformFromNative(cls, obj):
         """
         Replace the list in obj.value with a string.
         """
