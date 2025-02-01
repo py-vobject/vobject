@@ -431,7 +431,7 @@ def test_free_busy():
     assert vfb.serialize().replace("\r\n", "\n") == freebusy.replace("\r\n", "\n")
 
 
-def test_availablity():
+def test_availability():
     """
     Test availability components
     """
