@@ -549,11 +549,11 @@ def test_omits_dst_offset():
     # Check dateutil, pytz, and zoneinfo (3.9+) tzinfo instances
     _timezones = []
     if "dateutil" in globals():
-        tz = dateutil.tz.gettz("US/Eastern")
+        tz = dateutil.tz.gettz("America/New_York")
         assert tz is not None
         _timezones.append(tz)
     if "zoneinfo" in globals():
-        tz = zoneinfo.ZoneInfo("US/Eastern")
+        tz = zoneinfo.ZoneInfo("America/New_York")
         assert tz is not None
         _timezones.append(tz)
 
