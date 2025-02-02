@@ -41,7 +41,7 @@ class Behavior:
     @cvar sortFirst:
         The lower-case list of children which should come first when sorting.
     @cvar allowGroup:
-        Whether or not vCard style group prefixes are allowed.
+        Whether vCard style group prefixes are allowed.
     """
 
     name = ""
@@ -69,10 +69,10 @@ class Behavior:
             L{Component<base.Component>} to be validated.
         @param raiseException:
             If True, raise a L{base.ValidateError} on validation failure.
-            Otherwise return a boolean.
+            Otherwise, return a boolean.
         @param complainUnrecognized:
-            If True, fail to validate if an uncrecognized parameter or child is
-            found.  Otherwise log the lack of recognition.
+            If True, fail to validate if an unrecognized parameter or child is
+            found.  Otherwise, log the lack of recognition.
 
         """
         if not cls.allowGroup and obj.group is not None:
@@ -139,7 +139,7 @@ class Behavior:
     @classmethod
     def serialize(cls, obj, buf, lineLength, validate=True, *args, **kwargs):
         """
-        Set implicit parameters, do encoding, return unicode string.
+        Set implicit parameters, do encoding, return Unicode string.
 
         If validate is True, raise VObjectError if the line doesn't validate
         after implicit parameters are generated.
