@@ -69,7 +69,8 @@ and [six](https://pypi.python.org/pypi/six) packages.
 To run all tests, use:
 
 ```
-python tests.py
+pip install -e '.[dev]'  # or pip install pytest
+pytest -v tests
 ```
 
 # Usage
