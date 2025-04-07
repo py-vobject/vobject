@@ -1,8 +1,8 @@
 from . import base
 
 
-#------------------------ Abstract class for behavior --------------------------
-class Behavior(object):
+# ------------------------ Abstract class for behavior --------------------------
+class Behavior:
     """
     Behavior (validation, encoding, and transformations) for vobjects.
 
@@ -43,9 +43,10 @@ class Behavior(object):
     @cvar allowGroup:
         Whether or not vCard style group prefixes are allowed.
     """
-    name = ''
-    description = ''
-    versionString = ''
+
+    name = ""
+    description = ""
+    versionString = ""
     knownChildren = {}
     quotedPrintable = False
     defaultBehavior = None
@@ -75,32 +76,36 @@ class Behavior(object):
 
         """
         if not cls.allowGroup and obj.group is not None:
-            err = "{0} has a group, but this object doesn't support groups".format(obj)
-            raise base.VObjectError(err)
+            raise base.VObjectError(f"{obj} has a group, but this object doesn't support groups")
         if isinstance(obj, base.ContentLine):
             return cls.lineValidate(obj, raiseException, complainUnrecognized)
         elif isinstance(obj, base.Component):
-            count = {}
+            count, alts = {}, {}
             for child in obj.getChildren():
                 if not child.validate(raiseException, complainUnrecognized):
                     return False
                 name = child.name.upper()
-                count[name] = count.get(name, 0) + 1
+                alt = (
+                    child.params["ALTID"][0]
+                    if hasattr(child, "params") and "ALTID" in child.params and len(child.params["ALTID"])
+                    else None
+                )
+                if not alt or not name + str(alt) in alts:
+                    count[name] = count.get(name, 0) + 1
+                if alt is not None:
+                    alts[name + str(alt)] = True
             for key, val in cls.knownChildren.items():
                 if count.get(key, 0) < val[0]:
                     if raiseException:
-                        m = "{0} components must contain at least {1} {2}"
-                        raise base.ValidateError(m .format(cls.name, val[0], key))
+                        raise base.ValidateError(f"{cls.name} components must contain at least {val[0]} {key}")
                     return False
-                if val[1] and count.get(key, 0) > val[1]:
+                if val[1] is not None and count.get(key, 0) > val[1]:
                     if raiseException:
-                        m = "{0} components cannot contain more than {1} {2}"
-                        raise base.ValidateError(m.format(cls.name, val[1], key))
+                        raise base.ValidateError(f"{cls.name} components cannot contain more than {val[1]} {key}")
                     return False
             return True
         else:
-            err = "{0} is not a Component or Contentline".format(obj)
-            raise base.VObjectError(err)
+            raise base.VObjectError(f"{obj} is not a Component or Contentline")
 
     @classmethod
     def lineValidate(cls, line, raiseException, complainUnrecognized):
@@ -138,7 +143,10 @@ class Behavior(object):
     @classmethod
     def generateImplicitParameters(cls, obj):
         """Generate any required information that don't yet exist."""
-        pass
+
+    @classmethod
+    def postprocess(cls, obj):
+        """Perform additional parsing steps specific to this ContentLine or Component."""
 
     @classmethod
     def serialize(cls, obj, buf, lineLength, validate=True, *args, **kwargs):

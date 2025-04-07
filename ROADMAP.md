@@ -5,14 +5,14 @@ Immediate tasks, starting early 2024
 
 - [ ] Apply all open good PRs
   - Add unit test coverage where missing
-  - Add comments to _eventable_ repo, so people can see they're being 
+  - Add comments to _eventable_ repo, so people can see they're being
     fixed in the _py-vobject_ project
 - [ ] Do a pass through the open issues at _eventable_
   - Fix anything easy
   - Copy the issue over to _py-vobject_ for bigger items that can't be
     fixed right away
 - [ ] Renumber _master_ for 1.0.x
-  - And rename to `main` while we're here? 
+  - And rename to `main` while we're here?
 - [ ] Set up GitHub issue triage, etc
   - Group members and permissions
   - Labels

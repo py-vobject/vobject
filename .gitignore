@@ -10,3 +10,4 @@ venv/**/*
 *.sublime-*
 .coverage
 venv*
+programmers-guide/build

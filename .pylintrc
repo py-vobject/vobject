@@ -1,0 +1,39 @@
+[MASTER]
+jobs=2
+ignore-paths=(?!(vobject|tests))/*
+
+[FORMAT]
+max-line-length = 130
+
+[REFACTORING]
+max-args = 8
+max-attributes = 9
+max-bool-expr = 6
+max-branches = 32
+max-locals = 31
+max-module-lines = 1200
+max-nested-blocks = 6
+max-positional-arguments = 8
+max-statements = 95
+
+[MESSAGES CONTROL]
+disable=
+	I,
+	import-error,
+	# W
+	fixme,
+	keyword-arg-before-vararg,
+	logging-format-interpolation,
+	protected-access,
+	raise-missing-from,
+	unspecified-encoding,
+	unused-argument,
+	# C
+	import-outside-toplevel,
+	invalid-name,
+	missing-docstring,
+	unidiomatic-typecheck,
+	# R
+	duplicate-code,
+	no-else-return,
+	too-few-public-methods,

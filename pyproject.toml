@@ -1,27 +1,23 @@
-[build-system]
-requires = ["flit_core >= 3.4"]
-build-backend = "flit_core.buildapi"
-
 [project]
 name = "vobject"
 description = "Python Calendar and Address object management"
 readme = "README.md"
 license = {file = "LICENSE-2.0.txt"}
-keywords = []
+keywords = ["vobject", "icalendar", "vcard", "ics", "vcf", "hcalendar"]
 
 dynamic = ["version"]
 dependencies = [
     "python-dateutil >= 2.5.0; python_version < '3.10'",
     "python-dateutil >= 2.7.0; python_version >= '3.10'",
     "pytz >= 2019.1",
-    "six",
 ]
 requires-python = ">= 3.8"
 authors = [
+     {name = "Jeffrey Harris", email = "jeffrey@osafoundation.org"},
 ]
 
 maintainers = [
-    {name = "David Arnold", email = "davida@pobox.com"}
+    {name = "David Arnold", email = "davida@pobox.com"},
 ]
 
 classifiers = [
@@ -43,9 +39,10 @@ classifiers = [
 ]
 
 [project.urls]
-homepage = "http://py-vobject.github.io/"
+homepage = "https://py-vobject.github.io/"
 source = "https://github.com/py-vobject/vobject"
 download = "https://github.com/py-vobject/vobject/releases"
+documentation = "https://vobject.readthedocs.io"
 issues = "https://github.com/py-vobject/vobject/issues"
 
 [project.scripts]
@@ -58,10 +55,15 @@ dev = [
     "coverage",
     "flake8",
     "flit",
+    "pre-commit",
     "pylint",
     "pytest",
     "sphinx",
 ]
+
+[build-system]
+requires = ["flit_core >= 3.4"]
+build-backend = "flit_core.buildapi"
 
 [tool.flit.module]
 name = "vobject"
@@ -69,13 +71,35 @@ name = "vobject"
 [tool.flit.sdist]
 include = [
     "ACKNOWLEDGEMENTS.txt",
+    "CHANGELOG.md",
+    "CONTRIBUTING.md",
+    "programmers-guide",
     "test_files/*.ics",
     "test_files/*.vcf",
+    "tests",
 ]
 
-[tool.flake8]
-max-line-length = "88"
-extend-ignore = ["E203", "E701"]
+[tool.black]
+target-version = ["py39", "py310", "py311", "py312", "py313"]
+line-length = 120
+skip-magic-trailing-comma = true
 
-[tool.pylint.format]
-max-line-length = "88"
+[tool.flake8]
+max-line-length = 120
+ignore = ["E203", "E501", "W503"]
+exclude = [".git", "__pycache__", ".venv", "venv"]
+per-file-ignores = ["*/__init__.py: F401"]
+
+[tool.isort]
+profile = "black"
+line_length = 120
+multi_line_output = 3
+
+[tool.tox]
+requires = ["tox>=4.19"]
+env_list = ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
+
+[tool.tox.env_run_base]
+description = "Run test under {base_python}"
+deps = ["pytest"]
+commands = [["pytest"]]

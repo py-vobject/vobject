@@ -1,4 +1,5 @@
 # VObject
+
 [![PyPI version](https://badge.fury.io/py/vobject.svg)](https://pypi.python.org/pypi/vobject)
 [![PyPI downloads](https://img.shields.io/pypi/dm/vobject.svg)](https://pypi.python.org/pypi/vobject)
 [![Build](https://github.com/py-vobject/vobject/actions/workflows/test.yml/badge.svg)](https://github.com/py-vobject/vobject/actions/workflows/test.yml)
@@ -15,10 +16,10 @@ The [Calendar Server](http://calendarserver.org/) team has added VAVAILABILITY
 support to VObject's iCalendar parsing.
 
 There are two series of releases:
-* Versions 0.9.x continue to support Python 2.7.  This branch is maintained 
-  only for backward compatibility, and does not get new features.
-* Versions 1.x support only Python 3.8 or later, and is the focus of
-  ongoing feature development.
+
+* Versions 0.9.x continue to support Python 2.7. This branch is maintained only for backward compatibility, and does not
+  get new features.
+* Versions 1.x support only Python 3.8 or later, and is the focus of ongoing feature development.
 
 Please report bugs and issues directly on [GitHub](https://github.com/py-vobject/vobject/issues).
 
@@ -26,22 +27,25 @@ VObject is licensed under the [Apache 2.0 license](http://www.apache.org/license
 
 Useful scripts included with VObject:
 
-* [ics_diff](https://github.com/py-vobject/vobject/blob/master/vobject/ics_diff.py): order is irrelevant in iCalendar files, return a diff of meaningful changes between icalendar files
-* [change_tz](https://github.com/py-vobject/vobject/blob/master/vobject/change_tz.py): Take an iCalendar file with events in the wrong timezone, change all events or just UTC events into one of the timezones **pytz** supports. Requires [pytz](https://pypi.python.org/pypi/pytz/).
+* [ics_diff](https://github.com/py-vobject/vobject/blob/master/vobject/ics_diff.py): order is irrelevant in iCalendar
+  files, return a diff of meaningful changes between icalendar files
+* [change_tz](https://github.com/py-vobject/vobject/blob/master/vobject/change_tz.py): Take an iCalendar file with
+  events in the wrong timezone, change all events or just UTC events into one of the timezones **pytz** supports.
+  Requires [pytz](https://pypi.python.org/pypi/pytz/).
 
 # History
-VObject was originally developed in concert with the Open Source Application
-Foundation's _Chandler_ project by Jeffrey Harris.  Maintenance was later
-passed to [Sameen Karim](https://github.com/skarim) and
+
+VObject was originally developed in concert with the Open Source Application Foundation's _Chandler_ project by
+Jeffrey Harris. Maintenance was later passed to [Sameen Karim](https://github.com/skarim) and
 [Will Percival](https://github.com/wpercy) at [Eventable](https://github.com/eventable).
-After several years of inactivity, the project was revived under a dedicated
-GitHub organization, with new volunteers.
+After several years of inactivity, the project was revived under a dedicated GitHub organization, with new volunteers.
 
-**Please note**: the original repository at [eventable/vobject](https://github.com/eventable/vobject/)
-is _unmaintained_.  This project forked the latest code from that repository, after
-attempts to revive the existing project with new maintainers were unsuccessful.
+**Please note**: the original repository at [eventable/vobject](https://github.com/eventable/vobject/) is
+_unmaintained_. This project forked the latest code from that repository, after attempts to revive the existing project
+with new maintainers were unsuccessful.
 
-Many thanks to [all the contributors](https://github.com/py-vobject/vobject/blob/master/ACKNOWLEDGEMENTS.txt) for their dedication and support.
+Many thanks to [all the contributors](https://github.com/py-vobject/vobject/blob/master/ACKNOWLEDGEMENTS.txt) for their
+dedication and support.
 
 # Installation
 
@@ -51,24 +55,23 @@ To install with [pip](https://pypi.python.org/pypi/pip), run:
 pip install vobject
 ```
 
-
 Or download the package and run:
 
 ```
 python setup.py install
 ```
 
-VObject requires Python 2.7 or higher, along with the [dateutil](https://pypi.python.org/pypi/python-dateutil/) and [six](https://pypi.python.org/pypi/six) packages.
-
+VObject requires Python 2.7 or higher, along with the [dateutil](https://pypi.python.org/pypi/python-dateutil/)
+and [six](https://pypi.python.org/pypi/six) packages.
 
 # Running tests
 
 To run all tests, use:
 
 ```
-python tests.py
+pip install -e '.[dev]'  # or pip install pytest
+pytest -v tests
 ```
-
 
 # Usage
 
@@ -76,9 +79,8 @@ python tests.py
 
 #### Creating iCalendar objects
 
-VObject has a basic datastructure for working with iCalendar-like
-syntaxes.  Additionally, it defines specialized behaviors for many of
-the commonly used iCalendar objects.
+VObject has a basic datastructure for working with iCalendar-like syntaxes. Additionally, it defines specialized
+behaviors for many of the commonly used iCalendar objects.
 
 To create an object that already has a behavior defined, run:
 
@@ -113,12 +115,10 @@ children:
        SUMMARY: This is a note
 ```
 
-Note that summary is a little different from vevent, it's a
-ContentLine, not a Component.  It can't have children, and it has a
-special value attribute.
+Note that summary is a little different from vevent, it's a ContentLine, not a Component. It can't have children, and it
+has a special value attribute.
 
-ContentLines can also have parameters.  They can be accessed with
-regular attribute names with _param appended:
+ContentLines can also have parameters. They can be accessed with regular attribute names with _param appended:
 
 ```
 >>> cal.vevent.summary.x_random_param = 'Random parameter'
@@ -132,9 +132,8 @@ regular attribute names with _param appended:
 
 There are a few things to note about this example
 
-  * The underscore in x_random is converted to a dash (dashes are
-    legal in iCalendar, underscores legal in Python)
-  * X-RANDOM's value is a list.
+* The underscore in x_random is converted to a dash (dashes are legal in iCalendar, underscores legal in Python)
+* X-RANDOM's value is a list.
 
 If you want to access the full list of parameters, not just the first,
 use &lt;paramname&gt;_paramlist:
@@ -147,7 +146,8 @@ use &lt;paramname&gt;_paramlist:
 <SUMMARY{'X-RANDOM': ['Random parameter', 'Other param']}This is a note>
 ```
 
-Similar to parameters, If you want to access more than just the first child of a Component, you can access the full list of children of a given name by appending _list to the attribute name:
+Similar to parameters, If you want to access more than just the first child of a Component, you can access the full list
+of children of a given name by appending _list to the attribute name:
 
 ```
 >>> cal.add('vevent').add('summary').value = "Second VEVENT"
@@ -202,11 +202,10 @@ END:VCALENDAR
 ```
 
 Observe that serializing adds missing required lines like version and
-prodid.  A random UID would be generated, too, if one didn't exist.
+prodid. A random UID would be generated, too, if one didn't exist.
 
 If dtstart's tzinfo had been something other than UTC, an appropriate
 vtimezone would be created for it.
-
 
 #### Parsing iCalendar objects
 
@@ -227,7 +226,6 @@ datetime.datetime(2006, 2, 16, 0, 0, tzinfo=tzutc())
 ```
 
 More examples can be found in source code doctests.
-
 
 ## vCards
 
@@ -307,7 +305,9 @@ u'Harris'
  <EMAIL{'TYPE': ['INTERNET']}jeffery@example.org>]
 ```
 
-Just like with iCalendar example above readComponents will yield a generator from a stream or string containing multiple vCards objects.
+Just like with iCalendar example above readComponents will yield a generator from a stream or string containing multiple
+vCards objects.
+
 ```
 >>> vobject.readComponents(vCardStream).next().email.value
 'jeffrey@osafoundation.org'

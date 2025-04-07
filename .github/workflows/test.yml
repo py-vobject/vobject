@@ -14,8 +14,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install Requirements
         run: |
-          python -m pip install --upgrade flit pip wheel
+          python -m pip install --upgrade flit pip wheel pytest
           pip install -e .['dev']
       - name: Run Tests
         run: |
-          python tests.py
+          pytest
