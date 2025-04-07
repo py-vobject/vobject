@@ -80,18 +80,26 @@ class Behavior:
         if isinstance(obj, base.ContentLine):
             return cls.lineValidate(obj, raiseException, complainUnrecognized)
         elif isinstance(obj, base.Component):
-            count = {}
+            count, alts = {}, {}
             for child in obj.getChildren():
                 if not child.validate(raiseException, complainUnrecognized):
                     return False
                 name = child.name.upper()
-                count[name] = count.get(name, 0) + 1
+                alt = (
+                    child.params["ALTID"][0]
+                    if hasattr(child, "params") and "ALTID" in child.params and len(child.params["ALTID"])
+                    else None
+                )
+                if not alt or not name + str(alt) in alts:
+                    count[name] = count.get(name, 0) + 1
+                if alt is not None:
+                    alts[name + str(alt)] = True
             for key, val in cls.knownChildren.items():
                 if count.get(key, 0) < val[0]:
                     if raiseException:
                         raise base.ValidateError(f"{cls.name} components must contain at least {val[0]} {key}")
                     return False
-                if val[1] and count.get(key, 0) > val[1]:
+                if val[1] is not None and count.get(key, 0) > val[1]:
                     if raiseException:
                         raise base.ValidateError(f"{cls.name} components cannot contain more than {val[1]} {key}")
                     return False
@@ -135,6 +143,10 @@ class Behavior:
     @classmethod
     def generateImplicitParameters(cls, obj):
         """Generate any required information that don't yet exist."""
+
+    @classmethod
+    def postprocess(cls, obj):
+        """Perform additional parsing steps specific to this ContentLine or Component."""
 
     @classmethod
     def serialize(cls, obj, buf, lineLength, validate=True, *args, **kwargs):

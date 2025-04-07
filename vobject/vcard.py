@@ -1,6 +1,7 @@
 """Definitions and behavior for vCard 3.0"""
 
 import codecs
+import re
 
 from . import behavior
 from .base import ContentLine, backslashEscape, basestring, registerBehavior, str_
@@ -46,6 +47,26 @@ class Name:
                 and self.prefix == other.prefix
                 and self.suffix == other.suffix
             )
+        except AttributeError:
+            return False
+
+
+class Gender:
+    def __init__(self, sex="", identity=""):
+        self.sex = sex
+        self.identity = identity
+
+    def __str__(self):
+        _order = ("identity", "sex")
+        out = " ".join(getattr(self, val) for val in _order)
+        return str_(out)
+
+    def __repr__(self):
+        return f"<Gender: {self}>"
+
+    def __eq__(self, other):
+        try:
+            return self.sex == other.sex and self.identity == other.identity
         except AttributeError:
             return False
 
@@ -97,6 +118,26 @@ class Address:
                 and self.code == other.code
                 and self.country == other.country
             )
+        except AttributeError:
+            return False
+
+
+class ClientPIDMap:
+    def __init__(self, pid="", uuid=""):
+        self.pid = pid
+        self.uuid = uuid
+
+    def __str__(self):
+        _order = ("pid", "uuid")
+        out = " ".join(getattr(self, val) for val in _order)
+        return str_(out)
+
+    def __repr__(self):
+        return f"<ClientPIDMap: {self}>"
+
+    def __eq__(self, other):
+        try:
+            return self.pid == other.pid and self.uuid == other.uuid
         except AttributeError:
             return False
 
@@ -200,6 +241,87 @@ class VCard3_0(VCardBehavior):
 registerBehavior(VCard3_0, default=True)
 
 
+class VCard4_0(VCardBehavior):
+    """
+    vCard 4.0 behavior.
+    """
+
+    name = "VCARD"
+    description = "vCard 4.0, defined in rfc6350"
+    versionString = "4.0"
+    isComponent = True
+    sortFirst = ("version", "prodid", "uid")
+    knownChildren = {
+        "SOURCE": (0, None, None),  # min, max, behaviorRegistry id
+        "KIND": (0, 1, None),
+        "FN": (1, None, None),
+        "N": (0, 1, None),
+        "VERSION": (1, 1, None),  # required, auto-generated
+        "NICKNAME": (0, None, None),
+        "PHOTO": (0, None, None),
+        "BDAY": (0, 1, None),
+        "ANNIVERSARY": (0, 1, None),
+        "GENDER": (0, 1, None),
+        "ADR": (0, None, None),
+        "TEL": (0, None, None),
+        "EMAIL": (0, None, None),
+        "IMPP": (0, None, None),
+        "LANG": (0, None, None),
+        "TZ": (0, None, None),
+        "GEO": (0, None, None),
+        "TITLE": (0, None, None),
+        "ROLE": (0, None, None),
+        "LOGO": (0, None, None),
+        "ORG": (0, None, None),
+        "MEMBER": (0, None, None),
+        "RELATED": (0, None, None),
+        "CATEGORIES": (0, None, None),
+        "NOTE": (0, None, None),
+        "PRODID": (0, 1, None),
+        "REV": (0, 1, None),
+        "SOUND": (0, None, None),
+        "UID": (0, 1, None),
+        "CLIENTPIDMAP": (0, None, None),
+        "URL": (0, None, None),
+        "KEY": (0, None, None),
+        "FBURL": (0, None, None),
+        "CALADRURI": (0, None, None),
+        "CALURI": (0, None, None),
+        "XML": (0, None, None),
+    }
+
+    UNESCAPED_COMMA = re.compile(r"(?<!\\),", re.VERBOSE)
+
+    @classmethod
+    def generateImplicitParameters(cls, obj):
+        """
+        Create VERSION if needed.
+        """
+        if not hasattr(obj, "version"):
+            obj.add(ContentLine("VERSION", [], cls.versionString))
+
+    @classmethod
+    def postprocess(cls, obj):
+        """
+        Handle a differences between version 3.0 and 4.0 in SAFE-CHAR.
+
+        Version 4.0 permits comma-delinated parameters, like TYPE="work,cell".
+        """
+        for childArray in obj.contents:
+            for child in obj.contents[childArray]:
+                if hasattr(child, "params"):
+                    for key, val in child.params.items():
+                        if isinstance(val, list) and len(val):
+                            new_ = []
+                            for v in val:
+                                new_ += re.split(cls.UNESCAPED_COMMA, v)
+                            if len(new_) != len(val):
+                                child.params[key] = new_
+
+
+registerBehavior(VCard4_0)
+
+
 class FN(VCardTextBehavior):
     name = "FN"
     description = "Formatted name"
@@ -291,6 +413,8 @@ def serializeFields(obj, order=None):
 
 NAME_ORDER = ("family", "given", "additional", "prefix", "suffix")
 ADDRESS_ORDER = ("box", "extended", "street", "city", "region", "code", "country")
+CLIENTPIDMAP_ORDER = ("pid", "uuid")
+GENDER_ORDER = ("sex", "identity")
 
 
 class NameBehavior(VCardBehavior):
@@ -322,6 +446,37 @@ class NameBehavior(VCardBehavior):
 
 
 registerBehavior(NameBehavior, "N")
+
+
+class GenderBehavior(VCardBehavior):
+    """
+    A structured gender.
+    """
+
+    hasNative = True
+
+    @staticmethod
+    def transformToNative(obj):
+        """
+        Turn obj.value into a Gender.
+        """
+        if obj.isNative:
+            return obj
+        obj.isNative = True
+        obj.value = Gender(**dict(zip(GENDER_ORDER, splitFields(obj.value))))
+        return obj
+
+    @staticmethod
+    def transformFromNative(obj):
+        """
+        Replace the Gender in obj.value with a string.
+        """
+        obj.isNative = False
+        obj.value = serializeFields(obj.value, GENDER_ORDER)
+        return obj
+
+
+registerBehavior(GenderBehavior, "GENDER")
 
 
 class AddressBehavior(VCardBehavior):
@@ -386,3 +541,34 @@ class OrgBehavior(VCardBehavior):
 
 
 registerBehavior(OrgBehavior, "ORG")
+
+
+class ClientPIDMapBehavior(VCardBehavior):
+    """
+    A structured client PID mapping.
+    """
+
+    hasNative = True
+
+    @staticmethod
+    def transformToNative(obj):
+        """
+        Turn obj.value into a ClientPIDMap.
+        """
+        if obj.isNative:
+            return obj
+        obj.isNative = True
+        obj.value = ClientPIDMap(**dict(zip(CLIENTPIDMAP_ORDER, splitFields(obj.value))))
+        return obj
+
+    @staticmethod
+    def transformFromNative(obj):
+        """
+        Replace the ClientPIDMap in obj.value with a string.
+        """
+        obj.isNative = False
+        obj.value = serializeFields(obj.value, CLIENTPIDMAP_ORDER)
+        return obj
+
+
+registerBehavior(ClientPIDMapBehavior, "CLIENTPIDMAP")

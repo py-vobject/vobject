@@ -1074,6 +1074,8 @@ def readComponents(streamOrString, validate=False, transform=True, ignoreUnreada
                         if validate:
                             component.validate(raiseException=True)
                         if transform:
+                            if component.behavior:
+                                component.behavior.postprocess(component)
                             component.transformChildrenToNative()
                         yield component  # EXIT POINT
                     else:
