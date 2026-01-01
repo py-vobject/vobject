@@ -1,0 +1,8 @@
+BEGIN:VCARD
+VERSION:4.0
+FN;ALTID=1;LANGUAGE=en:Yamada Taro
+FN;ALTID=1;LANGUAGE=ja:山田太郎
+N;ALTID=1;LANGUAGE=en:Yamada;Taro;;;
+N;ALTID=1;LANGUAGE=ja;SORT-AS="yamada,taro":山田;太郎;;;
+UID:urn:uuid:multilang-vcard-example
+END:VCARD

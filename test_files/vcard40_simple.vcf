@@ -1,0 +1,6 @@
+BEGIN:VCARD
+VERSION:4.0
+FN:John Doe
+N:Doe;John;;;
+UID:urn:uuid:f81d4fae-7dec-11d0-a765-00a0c91e6bf6
+END:VCARD

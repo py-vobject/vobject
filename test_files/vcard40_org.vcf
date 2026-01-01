@@ -1,0 +1,10 @@
+BEGIN:VCARD
+VERSION:4.0
+KIND:org
+FN:ABC Marketing
+ORG:ABC\, Inc.;North American Division;Marketing
+TEL;VALUE=uri:tel:+1-555-000-0000
+EMAIL:marketing@abc.example.com
+ADR:;;456 Corporate Way;Business City;NY;10001;U.S.A.
+URL:http://www.abc.example.com/marketing
+END:VCARD

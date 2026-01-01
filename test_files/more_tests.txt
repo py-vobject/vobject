@@ -83,3 +83,129 @@ u'\xe9'
 >>> vcs = vobject.readOne(vcs, allowQP = True)
 >>> vcs.serialize()
 'BEGIN:VCALENDAR\r\nVERSION:1.0\r\nPRODID:-//OpenSync//NONSGML OpenSync vformat 0.3//EN\r\nBEGIN:VEVENT\r\nUID:20080406T152030Z-7822\r\nDESCRIPTION:foo \xc3\xa5\\nbar \xc3\xa4\\nbaz \xc3\xb6\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n'
+
+vCard Version Selection
+.......................
+
+Creating vCard with version parameter:
+>>> v3 = vobject.vCard()  # Default is 3.0
+>>> v3.behavior.versionString
+'3.0'
+>>> v3_explicit = vobject.vCard('3.0')
+>>> v3_explicit.behavior.versionString
+'3.0'
+>>> v4 = vobject.vCard('4.0')
+>>> v4.behavior.versionString
+'4.0'
+
+Invalid version raises error:
+>>> try:
+...     vobject.vCard('2.0')
+... except ValueError as e:
+...     print("ValueError raised")
+ValueError raised
+
+vCard 4.0 Creation
+..................
+
+Create a basic vCard 4.0:
+>>> v4 = vobject.vCard('4.0')
+>>> v4.add('fn').value = 'John Doe'
+>>> v4.add('n').value = vobject.vcard.Name('Doe', 'John')
+>>> 'VERSION:4.0' in v4.serialize()
+True
+>>> 'FN:John Doe' in v4.serialize()
+True
+
+vCard 4.0 New Properties
+........................
+
+KIND property:
+>>> v4 = vobject.vCard('4.0')
+>>> v4.add('fn').value = 'Test Group'
+>>> v4.add('kind').value = 'group'
+>>> 'KIND:group' in v4.serialize()
+True
+
+GENDER property:
+>>> v4 = vobject.vCard('4.0')
+>>> v4.add('fn').value = 'Jane Doe'
+>>> v4.add('gender').value = 'F'
+>>> 'GENDER:F' in v4.serialize()
+True
+
+IMPP property:
+>>> v4 = vobject.vCard('4.0')
+>>> v4.add('fn').value = 'Test User'
+>>> v4.add('impp').value = 'xmpp:user@jabber.example.com'
+>>> 'IMPP:xmpp:user@jabber.example.com' in v4.serialize()
+True
+
+LANG property:
+>>> v4 = vobject.vCard('4.0')
+>>> v4.add('fn').value = 'Multilingual Person'
+>>> lang = v4.add('lang')
+>>> lang.value = 'en'
+>>> lang.params['PREF'] = ['1']
+>>> 'LANG' in v4.serialize()
+True
+
+Reading vCard 4.0 Files
+.......................
+
+Read a simple vCard 4.0:
+>>> f = get_stream("vcard40_simple.vcf")
+>>> v4 = vobject.readOne(f)
+>>> v4.version.value
+'4.0'
+>>> v4.fn.value
+'John Doe'
+
+Read a vCard 4.0 with KIND=group:
+>>> f = get_stream("vcard40_group.vcf")
+>>> v4_group = vobject.readOne(f)
+>>> v4_group.kind.value
+'group'
+>>> len(v4_group.member_list)
+3
+
+Read a vCard 4.0 with all properties:
+>>> f = get_stream("vcard40_full.vcf")
+>>> v4_full = vobject.readOne(f)
+>>> v4_full.version.value
+'4.0'
+>>> v4_full.kind.value
+'individual'
+>>> v4_full.gender.value
+'M'
+>>> v4_full.anniversary.value
+'20100612'
+
+Dual Version Compatibility
+..........................
+
+readOne auto-detects version from VERSION property:
+>>> vcard3_str = '''BEGIN:VCARD
+... VERSION:3.0
+... FN:Test 3.0
+... N:Test;3.0;;;
+... END:VCARD'''
+>>> v3 = vobject.readOne(vcard3_str)
+>>> v3.version.value
+'3.0'
+
+>>> vcard4_str = '''BEGIN:VCARD
+... VERSION:4.0
+... FN:Test 4.0
+... N:Test;4.0;;;
+... KIND:individual
+... END:VCARD'''
+>>> v4 = vobject.readOne(vcard4_str)
+>>> v4.version.value
+'4.0'
+
+Both versions serialize correctly:
+>>> '3.0' in v3.version.serialize()
+True
+>>> '4.0' in v4.version.serialize()
+True

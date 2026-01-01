@@ -1,0 +1,9 @@
+BEGIN:VCARD
+VERSION:4.0
+KIND:location
+FN:Empire State Building
+ADR:;;350 Fifth Avenue;New York;NY;10118;U.S.A.
+GEO:geo:40.748817,-73.985428
+TEL;VALUE=uri:tel:+1-212-736-3100
+URL:http://www.esbnyc.com
+END:VCARD
