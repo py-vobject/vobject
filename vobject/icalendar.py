@@ -693,7 +693,7 @@ class TextBehavior(behavior.Behavior):
             if encoding and encoding.upper() == cls.base64string:
                 line.value = base64.b64decode(line.value)
             else:
-                line.value = stringToTextValues(line.value)[0]
+                line.value = stringToTextValues(line.value, listSeparator=None)[0]
             line.encoded = False
 
     @classmethod
