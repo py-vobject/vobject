@@ -909,7 +909,7 @@ class MultiDateBehavior(behavior.Behavior):
                         if type(val[0]) is datetime.datetime and type(val[1]) is datetime.timedelta:
                             transformed.append(periodToString(val))
                             continue
-                        elif type(val[0]) is datetime.datetime and type(val[1]) is datetime.datetime:
+                        if type(val[0]) is datetime.datetime and type(val[1]) is datetime.datetime:
                             transformed.append(dateTimeToString(val[0]) + '/' + dateTimeToString(val[1]))
                             continue
                     if tzid is None and type(val) is datetime.datetime:
