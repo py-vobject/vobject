@@ -876,14 +876,20 @@ class MultiDateBehavior(behavior.Behavior):
             obj.value_param = 'DATE'
             obj.value = ','.join([dateToString(val) for val in obj.value])
             return obj
-        # Fixme: handle PERIOD case
         else:
             if obj.isNative:
                 obj.isNative = False
                 transformed = []
                 tzid = None
                 for val in obj.value:
-                    if tzid is None and type(val) == datetime.datetime:
+                    if obj.value_param == "PERIOD":
+                        if type(val[0]) is datetime.datetime and type(val[1]) is datetime.timedelta:
+                            transformed.append(periodToString(val))
+                            continue
+                        elif type(val[0]) is datetime.datetime and type(val[1]) is datetime.datetime:
+                            transformed.append(dateTimeToString(val[0]) + '/' + dateTimeToString(val[1]))
+                            continue
+                    if tzid is None and type(val) is datetime.datetime:
                         tzid = TimezoneComponent.registerTzinfo(val.tzinfo)
                         if tzid is not None:
                             obj.tzid_param = tzid
