@@ -2,7 +2,7 @@
 name = "vobject"
 description = "Python Calendar and Address object management"
 readme = "README.md"
-license = {file = "LICENSE-2.0.txt"}
+license = {file = "LICENSE"}
 keywords = ["vobject", "icalendar", "vcard", "ics", "vcf", "hcalendar"]
 
 dynamic = ["version"]
