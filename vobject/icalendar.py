@@ -349,7 +349,7 @@ class TimezoneComponent(Component):
             return None
 
         # Try a zoneinfo (CPython 3.9+) first.
-        if hasattr(tzinfo, 'key'):
+        if hasattr(tzinfo, "key"):
             return toUnicode(tzinfo.key)
 
         # Try pytz tzid key
