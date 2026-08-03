@@ -55,6 +55,15 @@ SPACE = " "
 TAB = "\t"
 SPACEORTAB = SPACE + TAB
 
+# Maximum allowed nesting depth of components (nested BEGIN:/END:
+# blocks).  Deeply-nested input would otherwise build a component tree
+# that overflows the interpreter stack during the recursive
+# transformChildrenToNative()/serialize() walks, raising an uncaught
+# RecursionError (a denial of service). Instead we raise the
+# documented ParseError once this depth is exceeded. The limit is far
+# above any legitimate vCard/iCal nesting.
+DEFAULT_MAX_NESTING = 100
+
 # --------------------------------- Main classes -------------------------------
 
 
@@ -1023,7 +1032,9 @@ class Stack:
         return self.stack.pop()
 
 
-def readComponents(streamOrString, validate=False, transform=True, ignoreUnreadable=False, allowQP=False):
+def readComponents(streamOrString, validate=False, transform=True,
+                   ignoreUnreadable=False, allowQP=False,
+                   max_nesting=DEFAULT_MAX_NESTING):
     """
     Generate one Component at a time from a stream.
     """
@@ -1053,6 +1064,9 @@ def readComponents(streamOrString, validate=False, transform=True, ignoreUnreada
                 versionLine = vline
                 stack.modifyTop(vline)
             elif vline.name == "BEGIN":
+                if len(stack) >= max_nesting:
+                    raise ParseError("Component nesting depth exceeds requested "
+                                     "maximum of {0} levels".format(max_nesting), n)
                 stack.push(Component(vline.value, group=vline.group))
             elif vline.name == "PROFILE":
                 if not stack.top():

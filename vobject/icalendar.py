@@ -348,6 +348,10 @@ class TimezoneComponent(Component):
         if tzinfo is None or (not allowUTC and tzinfo_eq(tzinfo, utc)):
             return None
 
+        # Try a zoneinfo (CPython 3.9+) first.
+        if hasattr(tzinfo, 'key'):
+            return toUnicode(tzinfo.key)
+
         # Try pytz tzid key
         if hasattr(tzinfo, "tzid"):
             return toUnicode(tzinfo.tzid)
