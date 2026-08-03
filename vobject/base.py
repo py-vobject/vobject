@@ -1032,9 +1032,14 @@ class Stack:
         return self.stack.pop()
 
 
-def readComponents(streamOrString, validate=False, transform=True,
-                   ignoreUnreadable=False, allowQP=False,
-                   max_nesting=DEFAULT_MAX_NESTING):
+def readComponents(
+    streamOrString,
+    validate=False,
+    transform=True,
+    ignoreUnreadable=False,
+    allowQP=False,
+    max_nesting=DEFAULT_MAX_NESTING,
+):
     """
     Generate one Component at a time from a stream.
     """
@@ -1065,8 +1070,7 @@ def readComponents(streamOrString, validate=False, transform=True,
                 stack.modifyTop(vline)
             elif vline.name == "BEGIN":
                 if len(stack) >= max_nesting:
-                    raise ParseError("Component nesting depth exceeds requested "
-                                     "maximum of {0} levels".format(max_nesting), n)
+                    raise ParseError(f"Component nesting depth exceeds requested maximum of {max_nesting} levels", n)
                 stack.push(Component(vline.value, group=vline.group))
             elif vline.name == "PROFILE":
                 if not stack.top():
