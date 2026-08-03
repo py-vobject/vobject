@@ -864,6 +864,34 @@ class TestIcalendar(unittest.TestCase):
         cal = base.readOne(test_file)
         self.assertEqual(datetime.datetime(2024, 8, 12, 22, 30, tzinfo=tzutc()), cal.vevent.dtend.value)
 
+    def test_nested_begin_depth(self):
+        """
+        Catch deeply nested BEGIN and raise ParseError rather than
+        exceeding interpreter recursion limit.
+
+        Reported by: oc-8a8a9d
+        """
+        depth = 200
+        deep_ical = ("".join("BEGIN:X\r\n" for _ in range(depth))
+            + "FN:test\r\n"
+            + "".join("END:X\r\n" for _ in range(depth)))
+        obj = None
+
+        default_recursion_limit = sys.getrecursionlimit()
+        sys.setrecursionlimit(150)
+        try:
+            # Vector 1: default readOne (transform=True)
+            with self.assertRaises(ParseError):
+                obj = base.readOne(deep_ical)
+
+            # Vector 2: serialize()
+            if obj:
+                with self.assertRaises(ParseError):
+                    obj.serialize()
+
+        finally:
+            sys.setrecursionlimit(default_recursion_limit)
+
 
 class TestChangeTZ(unittest.TestCase):
     """
