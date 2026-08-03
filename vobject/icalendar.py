@@ -726,8 +726,8 @@ class RecurringBehavior(VCalendarComponentBehavior):
 
     hasNative = True
 
-    @staticmethod
-    def transformToNative(obj):
+    @classmethod
+    def transformToNative(cls, obj):
         """
         Turn a recurring Component into a RecurringComponent.
         """
@@ -736,15 +736,15 @@ class RecurringBehavior(VCalendarComponentBehavior):
             obj.isNative = True
         return obj
 
-    @staticmethod
-    def transformFromNative(obj):
+    @classmethod
+    def transformFromNative(cls, obj):
         if obj.isNative:
             object.__setattr__(obj, "__class__", Component)
             obj.isNative = False
         return obj
 
-    @staticmethod
-    def generateImplicitParameters(obj):
+    @classmethod
+    def generateImplicitParameters(cls, obj):
         """
         Generate a UID and DTSTAMP if one does not exist.
 
@@ -769,8 +769,8 @@ class DateTimeBehavior(behavior.Behavior):
 
     hasNative = True
 
-    @staticmethod
-    def transformToNative(obj):
+    @classmethod
+    def transformToNative(cls, obj):
         """
         Turn obj.value into a datetime.
 
@@ -829,8 +829,8 @@ class DateOrDateTimeBehavior(behavior.Behavior):
 
     hasNative = True
 
-    @staticmethod
-    def transformToNative(obj):
+    @classmethod
+    def transformToNative(cls, obj):
         """
         Turn obj.value into a date or datetime.
         """
@@ -847,8 +847,8 @@ class DateOrDateTimeBehavior(behavior.Behavior):
             del obj.tzid_param
         return obj
 
-    @staticmethod
-    def transformFromNative(obj):
+    @classmethod
+    def transformFromNative(cls, obj):
         """
         Replace the date or datetime in obj.value with an ISO 8601 string.
         """
@@ -869,8 +869,8 @@ class MultiDateBehavior(behavior.Behavior):
 
     hasNative = True
 
-    @staticmethod
-    def transformToNative(obj):
+    @classmethod
+    def transformToNative(cls, obj):
         """
         Turn obj.value into a list of dates, datetimes, or
         (datetime, timedelta) tuples.
@@ -892,8 +892,8 @@ class MultiDateBehavior(behavior.Behavior):
             obj.value = [stringToPeriod(x, tzinfo) for x in valTexts]
         return obj
 
-    @staticmethod
-    def transformFromNative(obj):
+    @classmethod
+    def transformFromNative(cls, obj):
         """
         Replace the date, datetime or period tuples in obj.value with
         appropriate strings.
@@ -1108,14 +1108,14 @@ class VTimezone(VCalendarComponentBehavior):
     }
 
     @classmethod
-    def validate(cls, obj, raiseException, *args):
+    def validate(cls, obj, raiseException=False, complainUnrecognized=False):
         if not hasattr(obj, "tzid") or obj.tzid.value is None:
             if raiseException:
                 m = "VTIMEZONE components must contain a valid TZID"
                 raise ValidateError(m)
             return False
         if "standard" in obj.contents or "daylight" in obj.contents:
-            return super(VTimezone, cls).validate(obj, raiseException, *args)
+            return super(VTimezone, cls).validate(obj, raiseException, complainUnrecognized)
         else:
             if raiseException:
                 m = "VTIMEZONE components must contain a STANDARD or a DAYLIGHT\
@@ -1123,16 +1123,16 @@ class VTimezone(VCalendarComponentBehavior):
                 raise ValidateError(m)
             return False
 
-    @staticmethod
-    def transformToNative(obj):
+    @classmethod
+    def transformToNative(cls, obj):
         if not obj.isNative:
             object.__setattr__(obj, "__class__", TimezoneComponent)
             obj.isNative = True
             obj.registerTzinfo(obj.tzinfo)
         return obj
 
-    @staticmethod
-    def transformFromNative(obj):
+    @classmethod
+    def transformFromNative(cls, obj):
         return obj
 
 
@@ -1210,7 +1210,7 @@ class VEvent(RecurringBehavior):
     }
 
     @classmethod
-    def validate(cls, obj, raiseException, *args):
+    def validate(cls, obj, raiseException=False, complainUnrecognized=False):
         if "dtend" in obj.contents and "duration" in obj.contents:
             if raiseException:
                 m = "VEVENT components cannot contain both DTEND and DURATION\
@@ -1218,7 +1218,7 @@ class VEvent(RecurringBehavior):
                 raise ValidateError(m)
             return False
         else:
-            return super(VEvent, cls).validate(obj, raiseException, *args)
+            return super(VEvent, cls).validate(obj, raiseException, complainUnrecognized)
 
 
 registerBehavior(VEvent)
@@ -1270,7 +1270,7 @@ class VTodo(RecurringBehavior):
     }
 
     @classmethod
-    def validate(cls, obj, raiseException, *args):
+    def validate(cls, obj, raiseException=False, complainUnrecognized=False):
         if "due" in obj.contents and "duration" in obj.contents:
             if raiseException:
                 m = "VTODO components cannot contain both DUE and DURATION\
@@ -1278,7 +1278,7 @@ class VTodo(RecurringBehavior):
                 raise ValidateError(m)
             return False
         else:
-            return super(VTodo, cls).validate(obj, raiseException, *args)
+            return super(VTodo, cls).validate(obj, raiseException, complainUnrecognized)
 
 
 registerBehavior(VTodo)
@@ -1366,8 +1366,8 @@ class VAlarm(VCalendarComponentBehavior):
         "DESCRIPTION": (0, 1, None),
     }
 
-    @staticmethod
-    def generateImplicitParameters(obj):
+    @classmethod
+    def generateImplicitParameters(cls, obj):
         """
         Create default ACTION and TRIGGER if they're not set.
         """
@@ -1381,7 +1381,7 @@ class VAlarm(VCalendarComponentBehavior):
             obj.add("trigger").value = datetime.timedelta(0)
 
     @classmethod
-    def validate(cls, obj, raiseException, *args):
+    def validate(cls, obj, raiseException=False, complainUnrecognized=False):
         """
         # TODO
         if obj.contents.has_key('dtend') and obj.contents.has_key('duration'):
@@ -1391,7 +1391,7 @@ class VAlarm(VCalendarComponentBehavior):
                 raise ValidateError(m)
             return False
         else:
-            return super(VEvent, cls).validate(obj, raiseException, *args)
+            return super(VEvent, cls).validate(obj, raiseException, complainUnrecognized)
         """
         return True
 
@@ -1429,14 +1429,14 @@ class VAvailability(VCalendarComponentBehavior):
     }
 
     @classmethod
-    def validate(cls, obj, raiseException, *args):
+    def validate(cls, obj, raiseException=False, complainUnrecognized=False):
         if "dtend" in obj.contents and "duration" in obj.contents:
             if raiseException:
                 m = "VAVAILABILITY components cannot contain both DTEND and DURATION components"
                 raise ValidateError(m)
             return False
         else:
-            return super(VAvailability, cls).validate(obj, raiseException, *args)
+            return super(VAvailability, cls).validate(obj, raiseException, complainUnrecognized)
 
 
 registerBehavior(VAvailability)
@@ -1469,7 +1469,7 @@ class Available(RecurringBehavior):
     }
 
     @classmethod
-    def validate(cls, obj, raiseException, *args):
+    def validate(cls, obj, raiseException=False, complainUnrecognized=False):
         has_dtend = "dtend" in obj.contents
         has_duration = "duration" in obj.contents
         if has_dtend and has_duration:
@@ -1485,7 +1485,7 @@ class Available(RecurringBehavior):
                 raise ValidateError(m)
             return False
         else:
-            return super(Available, cls).validate(obj, raiseException, *args)
+            return super(Available, cls).validate(obj, raiseException, complainUnrecognized)
 
 
 registerBehavior(Available)
@@ -1499,8 +1499,8 @@ class Duration(behavior.Behavior):
     name = "DURATION"
     hasNative = True
 
-    @staticmethod
-    def transformToNative(obj):
+    @classmethod
+    def transformToNative(cls, obj):
         """
         Turn obj.value into a datetime.timedelta.
         """
@@ -1519,8 +1519,8 @@ class Duration(behavior.Behavior):
             else:
                 raise ParseError("DURATION must have a single duration string.")
 
-    @staticmethod
-    def transformFromNative(obj):
+    @classmethod
+    def transformFromNative(cls, obj):
         """
         Replace the datetime.timedelta in obj.value with an RFC2445 string.
         """
@@ -1544,8 +1544,8 @@ class Trigger(behavior.Behavior):
     hasNative = True
     forceUTC = True
 
-    @staticmethod
-    def transformToNative(obj):
+    @classmethod
+    def transformToNative(cls, obj):
         """
         Turn obj.value into a timedelta or datetime.
         """
@@ -1580,8 +1580,8 @@ class Trigger(behavior.Behavior):
         else:
             raise ParseError("VALUE must be DURATION or DATE-TIME")
 
-    @staticmethod
-    def transformFromNative(obj):
+    @classmethod
+    def transformFromNative(cls, obj):
         if type(obj.value) is datetime.datetime:
             obj.value_param = "DATE-TIME"
             return UTCDateTimeBehavior.transformFromNative(obj)
@@ -1601,8 +1601,8 @@ class PeriodBehavior(behavior.Behavior):
 
     hasNative = True
 
-    @staticmethod
-    def transformToNative(obj):
+    @classmethod
+    def transformToNative(cls, obj):
         """
         Convert comma separated periods into tuples.
         """
@@ -2169,10 +2169,3 @@ def tzinfo_eq(tzinfo1, tzinfo2, startYear=2000, endYear=2020):
             if t1 != t2 or not dt_test(t1):
                 return False
     return True
-
-
-# ------------------- Testing and running functions ----------------------------
-if __name__ == "__main__":
-    import tests
-
-    tests._test()
