@@ -514,6 +514,31 @@ def test_recurrence_offset_naive():
     assert dates[-1] == datetime.datetime(2013, 3, 28, 0, 0)
 
 
+def test_rrdate_with_period():
+    """
+    Test round-trip parsing and serialization of an RRULE with
+    an RDATE using a PERIOD.
+    """
+
+    raw = (
+        "BEGIN:VCALENDAR\r\n"
+        + "VERSION:2.0\r\n"
+        + "PRODID:test\r\n"
+        + "BEGIN:VEVENT\r\n"
+        + "UID:test\r\n"
+        + "DTSTART:20000101T000000Z\r\n"
+        + "DURATION:PT1H\r\n"
+        + "DTSTAMP:20000101T000000Z\r\n"
+        + "RDATE;VALUE=PERIOD:20000102T000000Z/PT2H\r\n"
+        + "RRULE:FREQ=WEEKLY\r\n"
+        + "END:VEVENT\r\n"
+        + "END:VCALENDAR\r\n"
+    )
+    obj = vobject.readOne(raw)
+    serialized = obj.serialize()
+    assert raw == serialized
+
+
 def test_issue50():
     """
     Ensure leading spaces in a DATE-TIME value are ignored when not in
