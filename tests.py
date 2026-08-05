@@ -284,6 +284,28 @@ class TestBehaviors(unittest.TestCase):
             'TEST:20060216T100000/PT2H,20060516T100000/PT2H'
         )
 
+    def test_rrdate_with_period(self):
+        """
+        Test round-trip parsing and serialization of an RRULE with
+        an RDATE using a PERIOD.
+        """
+
+        raw = "BEGIN:VCALENDAR\r\n" \
+            + "VERSION:2.0\r\n" \
+            + "PRODID:test\r\n" \
+            + "BEGIN:VEVENT\r\n" \
+            + "UID:test\r\n" \
+            + "DTSTART:20000101T000000Z\r\n" \
+            + "DURATION:PT1H\r\n" \
+            + "DTSTAMP:20000101T000000Z\r\n" \
+            + "RDATE;VALUE=PERIOD:20000102T000000Z/PT2H\r\n" \
+            + "RRULE:FREQ=WEEKLY\r\n" \
+            + "END:VEVENT\r\n" \
+            + "END:VCALENDAR\r\n"
+        obj = base.readOne(raw)
+        serialized = obj.serialize()
+        self.assertEqual(raw, serialized)
+
 
 class TestVTodo(unittest.TestCase):
     """
