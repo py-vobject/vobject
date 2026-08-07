@@ -76,7 +76,7 @@ VObject Overview
 
 """
 
-from . import icalendar, vcard
+from . import icalendar, vcard, vcard40
 from .base import VERSION, newFromBehavior, readComponents, readOne
 
 # Package version
@@ -87,5 +87,38 @@ def iCalendar():
     return newFromBehavior("vcalendar", "2.0")
 
 
-def vCard():
-    return newFromBehavior("vcard", "3.0")
+def vCard(version='3.0'):
+    """
+    Create a vCard object.
+
+    Args:
+        version: vCard version to use. Either '3.0' (default) or '4.0'.
+
+    Returns:
+        A new vCard Component with the appropriate behavior.
+
+    Examples:
+        >>> v = vCard()  # Creates vCard 3.0
+        >>> v = vCard('3.0')  # Creates vCard 3.0
+        >>> v = vCard('4.0')  # Creates vCard 4.0
+    """
+    if version not in ('3.0', '4.0'):
+        raise ValueError("vCard version must be '3.0' or '4.0', got: {}".format(version))
+    return newFromBehavior('vcard', version)
+
+
+def vCard4():
+    """
+    Create a vCard 4.0 object.
+
+    This is a convenience function equivalent to vCard('4.0').
+
+    Returns:
+        A new vCard 4.0 Component.
+
+    Examples:
+        >>> v = vCard4()
+        >>> v.add('fn').value = 'John Doe'
+        >>> v.add('kind').value = 'individual'
+    """
+    return vCard('4.0')

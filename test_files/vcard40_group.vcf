@@ -1,0 +1,9 @@
+BEGIN:VCARD
+VERSION:4.0
+KIND:group
+FN:The Doe Family
+UID:urn:uuid:group-doe-family
+MEMBER:urn:uuid:f81d4fae-7dec-11d0-a765-00a0c91e6bf6
+MEMBER:urn:uuid:b8767877-b4a1-4c70-9acc-505d3819e519
+MEMBER:mailto:kid@example.com
+END:VCARD

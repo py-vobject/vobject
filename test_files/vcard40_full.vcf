@@ -1,0 +1,39 @@
+BEGIN:VCARD
+VERSION:4.0
+KIND:individual
+FN:Dr. John Q. Public\, III
+FN;LANGUAGE=jp:John Q. Public
+N:Public;John;Quinlan;Dr.;III
+NICKNAME:Johnny,JQP
+PHOTO:http://www.example.com/pub/photos/jqpublic.gif
+BDAY:19850415
+ANNIVERSARY:20100612
+GENDER:M
+ADR;TYPE=work:;;123 Main Street;Any Town;CA;91921-1234;U.S.A.
+ADR;TYPE=home;PREF=1:;;456 Oak Lane;Somewhere;NY;10001;U.S.A.
+TEL;VALUE=uri;TYPE=voice;PREF=1:tel:+1-555-555-5555
+TEL;VALUE=uri;TYPE=cell:tel:+1-555-123-4567
+EMAIL;TYPE=work:john.public@example.com
+EMAIL;TYPE=home;PREF=1:johnny@personal.example.org
+IMPP;PREF=1:xmpp:john@jabber.example.com
+IMPP:sip:john@voip.example.com
+LANG;PREF=1:en
+LANG;PREF=2:fr
+TZ:America/New_York
+GEO:geo:37.386013,-122.082932
+TITLE:CEO
+ROLE:Executive
+LOGO:http://www.example.com/pub/logos/company.png
+ORG:Example Corp.;North Division;Marketing
+RELATED;TYPE=spouse:urn:uuid:b8767877-b4a1-4c70-9acc-505d3819e519
+CATEGORIES:BUSINESS,NETWORKING
+NOTE:This is a note about John.\nHe likes vCards.
+REV:20231215T120000Z
+SOUND:http://www.example.com/pub/sounds/jqpublic.ogg
+UID:urn:uuid:f81d4fae-7dec-11d0-a765-00a0c91e6bf6
+URL:http://www.example.com/~jqpublic
+KEY:http://www.example.com/keys/jqpublic.pgp
+FBURL:http://www.example.com/busy/jqpublic
+CALADRURI:mailto:jqpublic@example.com
+CALURI:http://cal.example.com/jqpublic
+END:VCARD
