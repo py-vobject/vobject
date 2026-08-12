@@ -155,6 +155,50 @@ class TestCalendarSerializing(unittest.TestCase):
         # json tries to encode as utf-8 and it would break if some chars could not be encoded
         json.dumps(cal.serialize())
 
+    def test_missing_object_terminator(self):
+        """
+        Test parsing of vObject without line terminator on final line.
+        """
+        # Proper CRLF.
+        raw = "BEGIN:VCARD\r\n" \
+            + "END:VCARD"
+        card = base.readOne(raw)
+        self.assertIsNotNone(card)
+
+        # Check with folded line too.
+        raw = "BEGIN:VCARD\r\n" \
+            + "END:\r\n" \
+            + " VCARD"
+        card = base.readOne(raw)
+        self.assertIsNotNone(card)
+
+        # LF-only (Unix-style).
+        raw = "BEGIN:VCARD\n" \
+            + "END:VCARD"
+        card = base.readOne(raw)
+        self.assertIsNotNone(card)
+
+        # CR-only (old MacOS-style).
+        raw = "BEGIN:VCARD\r" \
+            + "END:VCARD"
+        card = base.readOne(raw)
+        self.assertIsNotNone(card)
+
+    def test_parsing_error_line_number(self):
+        """
+        Check that the line number reported for a parsing error is correct.
+        """
+        # Mismatched item names, with folded line.
+        raw = "BEGIN:\r\n" \
+            + " AAA\r\n" \
+            + "END:BBB"
+        with self.assertRaises(base.ParseError) as context:
+            card = base.readOne(raw)
+
+        # Check line number of parsing error.
+        e = context.exception
+        self.assertEqual(e.args[1], 3)
+
     @staticmethod
     def test_ical_to_hcal():
         """
