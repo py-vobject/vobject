@@ -786,12 +786,12 @@ def parseLine(line, lineNumber=None):
 
 # logical line regular expressions
 
-P_LINEEND = r"(?:\r\n|\r|\n|$)"
+P_LINEEND = r"(?:\r\n|\r|\n)"
 P_WRAP = rf"{P_LINEEND} [\t ]"
 P_LOGICALLINES = rf"""
 (
    (?: [^\r\n] | {P_WRAP} )*
-   {P_LINEEND}
+   (?: {P_LINEEND} | $ )
 )
 """
 
@@ -838,7 +838,13 @@ def getLogicalLines(fp, allowQP=True):
 
         lineNumber = 1
         for match in logical_lines_re.finditer(val):
-            line, n = wrap_re.subn("", match.group())
+            log_line = match.group()
+            # It's possible that the final line of the vobject doesn't
+            # have a line ending.  For ease of parsing, just add it.
+            # This should really be in an 'if not strict' branch.
+            if log_line[-1:] not in "\r\n":
+                log_line += "\r\n"
+            line, n = wrap_re.subn("", log_line)
             if line != "":
                 yield line, lineNumber
             lineNumber += n

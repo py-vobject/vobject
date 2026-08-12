@@ -173,3 +173,42 @@ def test_quoted_printable():
     vobjs = vobject.base.readComponents(quoted_printable, allowQP=True)
     for vo in vobjs:
         assert vo is not None
+
+
+def test_missing_object_terminator():
+    """
+    Test parsing of vObject without line terminator on final line.
+    """
+    # Proper CRLF.
+    raw = "BEGIN:VCARD\r\n" + "END:VCARD"
+    card = vobject.readOne(raw)
+    assert card is not None
+
+    # Check with folded line too.
+    raw = "BEGIN:VCARD\r\n" + "END:\r\n" + " VCARD"
+    card = vobject.readOne(raw)
+    assert card is not None
+
+    # LF-only (Unix-style).
+    raw = "BEGIN:VCARD\n" + "END:VCARD"
+    card = vobject.readOne(raw)
+    assert card is not None
+
+    # CR-only (old MacOS-style).
+    raw = "BEGIN:VCARD\r" + "END:VCARD"
+    card = vobject.readOne(raw)
+    assert card is not None
+
+
+def test_parsing_error_line_number(self):
+    """
+    Check that the line number reported for a parsing error is correct.
+    """
+    # Mismatched item names, with folded line.
+    raw = "BEGIN:\r\n" + " AAA\r\n" + "END:BBB"
+    with pytest.raises(vobject.base.ParseError) as context:
+        vobject.readOne(raw)
+
+    # Check line number of parsing error.
+    e = context.exception
+    self.assertEqual(e.args[1], 3)
