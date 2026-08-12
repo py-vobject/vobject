@@ -200,15 +200,14 @@ def test_missing_object_terminator():
     assert card is not None
 
 
-def test_parsing_error_line_number(self):
+def test_parsing_error_line_number():
     """
     Check that the line number reported for a parsing error is correct.
     """
     # Mismatched item names, with folded line.
     raw = "BEGIN:\r\n" + " AAA\r\n" + "END:BBB"
-    with pytest.raises(vobject.base.ParseError) as context:
+    with pytest.raises(vobject.base.ParseError) as e:
         vobject.readOne(raw)
 
     # Check line number of parsing error.
-    e = context.exception
-    self.assertEqual(e.args[1], 3)
+    assert e.value.args[1] == 3
