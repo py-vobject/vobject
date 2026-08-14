@@ -197,7 +197,7 @@ class TestCalendarSerializing(unittest.TestCase):
 
         # Check line number of parsing error.
         e = context.exception
-        self.assertEqual(e.args[1], 3)
+        self.assertEqual(e.lineNumber, 3)
 
     @staticmethod
     def test_ical_to_hcal():
