@@ -35,3 +35,18 @@ releases.
 With the possible exception of major releases, all contributions must
 maintain the existing API's syntax and semantics.  
 
+
+Release Process
+---------------
+0.9.x Branch
+- Run tests with CPython 2.7
+- Run tests with current minimum supported CPython 3
+- Run tests with current latest CPython 3
+- Update CHANGELOG.md
+- Check VERSION in vobject/base.py
+- Tag release like "v0.9.x"
+- Make source distribution `python setup.py sdist`
+- Make binary distribution `python setup.py bdist_wheel`
+- Upload both dists (from `dist/`) to PyPI.org with `twine`
+- Create release from tag at GitHub, and copy CHANGELOG notes to release notes
+- Update release notes list on `py-vobject.github.io`
