@@ -210,4 +210,4 @@ def test_parsing_error_line_number():
         vobject.readOne(raw)
 
     # Check line number of parsing error.
-    assert e.value.args[1] == 3
+    assert e.value.lineNumber == 3
