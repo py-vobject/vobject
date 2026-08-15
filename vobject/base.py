@@ -895,19 +895,56 @@ def getLogicalLines(fp, allowQP=True):
             lineNumber += n
 
     else:
+        # vCard-2.1 allows the use of Quoted-Printable encoding for the VALUE
+        # element of a logical line.  This represents non-printable ASCII
+        # like =XX where X is a capital hex digit, eg. CR is =0C, LF is =0A,
+        # etc.  Additionally, lines are folded at 76 character boundaries,
+        # using a trailing '=' character followed by the CRLF.  Much like
+        # vObject logical line folding, these sequences should be removed
+        # when processing a folded line.
+        #
+        # This function DOES remove the folding, but DOES NOT remove the
+        # escaped control characters.
+        #
+        # There's one complexity: the spec allows trailing whitespace to be
+        # removed from a line.  So, a line that ends with whitespace can be
+        # encoded by escaping the character(s), or if it's folded, the
+        # trailing '=' will protect it.  A line that ends with an
+        # EQUALS-SIGN should escape it (=3D).
+
         quotedPrintable = False
         newbuffer = six.StringIO
         logicalLine = newbuffer()
         lineNumber = 0
-        lineStartNumber = 0
+        lineStartNumber = 1
+
         while True:
             line = fp.readline()
             if line == '':
                 break
-            else:
-                line = line.rstrip(CRLF)
-                lineNumber += 1
-            if line.rstrip() == '':
+
+            line = line.rstrip(CRLF)
+            lineNumber += 1
+
+            if len(line) == 0:
+                # This is a fragile hack!
+                #
+                # Radicale issue #1238 (and specifically, our test case
+                # radicale_1238_3) seems to include blank lines following
+                # a BASE64 encoded photo.  These lines are zero-length
+                # (and also LF-only, not CRLF), fwiw.  Until 2026, this
+                # code checked the .rstrip() of a line here, not zero
+                # length.
+                #
+                # But, the sample from Radicale issue #1943 has a
+                # line that's alternating SP and NBSP characters, actual
+                # content, and folded (with SP at index 0).  Stripping that
+                # is removing content, and breaks a round-trip check.
+                #
+                # Removing the empty line from the 1238 test causes other
+                # issues, so for now, this is checking for zero-length,
+                # which allows both test cases to pass.
+
                 if logicalLine.tell() > 0:
                     yield logicalLine.getvalue(), lineStartNumber
                 lineStartNumber = lineNumber
@@ -915,27 +952,45 @@ def getLogicalLines(fp, allowQP=True):
                 quotedPrintable = False
                 continue
 
+            # If the logical line text read so far appears to be part of a
+            # Quoted-Printable folded line, and we're supposed to decode
+            # that, then append this line to it.
             if quotedPrintable and allowQP:
-                logicalLine.write('\n')
+                # Remove trailing '=' from accumulated text (ugly!).
+                cur = logicalLine.getvalue()
+                cur = cur[:-1]
+                logicalLine.seek(0, 0)
+                logicalLine.write(cur)
+                # Append this line, and reset the QP flag.
                 logicalLine.write(line)
                 quotedPrintable = False
             elif line[0] in SPACEORTAB:
+                # Accumulate a vObject-style folded line.
                 logicalLine.write(line[1:])
             elif logicalLine.tell() > 0:
+                # This isn't a folded line, so yield the accumulated text
+                # as a logical line, and reset the accumulation buffer.
                 yield logicalLine.getvalue(), lineStartNumber
                 lineStartNumber = lineNumber
                 logicalLine = newbuffer()
                 logicalLine.write(line)
             else:
+                # Start accumulating a new logical line.
                 logicalLine = newbuffer()
                 logicalLine.write(line)
 
-            # vCard 2.1 allows parameters to be encoded without a parameter name
-            # False positives are unlikely, but possible.
+            # vCard 2.1 allows parameters to be encoded without a parameter
+            # name, so we need to look for either ENCODING=QUOTED-PRINTABLE
+            # or just QUOTED-PRINTABLE.  NOTE that false positives are
+            # unlikely, but possible.
+            #
+            # If it is QP-encoded, and has a trailing '=' indicating the next
+            # line is a folded continuation, flag that.
             val = logicalLine.getvalue()
             if val[-1] == '=' and val.lower().find('quoted-printable') >= 0:
                 quotedPrintable = True
 
+        # Return any remaining accumulated text as a logical line.
         if logicalLine.tell() > 0:
             yield logicalLine.getvalue(), lineStartNumber
 

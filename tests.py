@@ -5,6 +5,7 @@ from __future__ import print_function
 import datetime
 import dateutil
 import re
+import six
 import sys
 import unittest
 import json
@@ -198,6 +199,31 @@ class TestCalendarSerializing(unittest.TestCase):
         # Check line number of parsing error.
         e = context.exception
         self.assertEqual(e.lineNumber, 3)
+
+    def test_parsing_quopri_folded_value(self):
+        """
+        Test parsing of QUOTED-PRINTABLE folded logical lines.
+        """
+        raw = "PROP1;PAR1;PAR2=PV:plain text\r\n" \
+            + "PROP2;PAR1;ENCODING=QUOTED-PRINTABLE:start =\r\n" \
+            + "middle=\r\n" \
+            + " end\r\n"  \
+            + "PROP3;QUOTED-PRINTABLE:embedded newline >=0C=0A<\r\n" \
+            + "PROP4:plain text\r\n"
+
+        fp = six.StringIO(raw)
+        lines = list(base.getLogicalLines(fp, allowQP=True))
+        self.assertEqual(len(lines), 4)
+        self.assertEqual(lines[0][0], "PROP1;PAR1;PAR2=PV:plain text")
+        self.assertEqual(lines[1][0], "PROP2;PAR1;ENCODING=QUOTED-PRINTABLE:start middle end")
+        self.assertEqual(lines[2][0], "PROP3;QUOTED-PRINTABLE:embedded newline >=0C=0A<")
+        self.assertEqual(lines[3][0], "PROP4:plain text")
+        self.assertEqual(lines[0][1], 1)
+        self.assertEqual(lines[1][1], 2)
+        self.assertEqual(lines[2][1], 5)
+        self.assertEqual(lines[3][1], 6)
+
+
 
     @staticmethod
     def test_ical_to_hcal():
