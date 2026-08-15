@@ -1,4 +1,5 @@
 import datetime
+import io
 
 import pytest
 
@@ -173,6 +174,32 @@ def test_quoted_printable():
     vobjs = vobject.base.readComponents(quoted_printable, allowQP=True)
     for vo in vobjs:
         assert vo is not None
+
+
+def test_parsing_quopri_folded_value():
+    """
+    Test parsing of QUOTED-PRINTABLE folded logical lines.
+    """
+    raw = (
+        "PROP1;PAR1;PAR2=PV:plain text\r\n"
+        + "PROP2;PAR1;ENCODING=QUOTED-PRINTABLE:start =\r\n"
+        + "middle=\r\n"
+        + " end\r\n"
+        + "PROP3;QUOTED-PRINTABLE:embedded newline >=0C=0A<\r\n"
+        + "PROP4:plain text\r\n"
+    )
+
+    fp = io.StringIO(raw)
+    lines = list(vobject.base.getLogicalLines(fp, allowQP=True))
+    assert len(lines) == 4
+    assert lines[0][0] == "PROP1;PAR1;PAR2=PV:plain text"
+    assert lines[0][1] == 1
+    assert lines[1][0] == "PROP2;PAR1;ENCODING=QUOTED-PRINTABLE:start middle end"
+    assert lines[1][1] == 2
+    assert lines[2][0] == "PROP3;QUOTED-PRINTABLE:embedded newline >=0C=0A<"
+    assert lines[2][1] == 5
+    assert lines[3][0] == "PROP4:plain text"
+    assert lines[3][1] == 6
 
 
 def test_missing_object_terminator():
