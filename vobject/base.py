@@ -1122,7 +1122,12 @@ def readOne(stream, validate=False, transform=True, ignoreUnreadable=False, allo
     """
     Return the first component from stream.
     """
-    return next(readComponents(stream, validate, transform, ignoreUnreadable, allowQP))
+    try:
+        return next(readComponents(stream, validate, transform, ignoreUnreadable, allowQP))
+    except StopIteration:
+        # An empty (or whitespace-only) stream yields no components; report it
+        # as a parse error instead of letting a bare StopIteration escape.
+        raise ParseError("No components in stream")
 
 
 # --------------------------- version registry ---------------------------------
