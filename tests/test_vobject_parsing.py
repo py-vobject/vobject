@@ -144,6 +144,16 @@ def test_bad_stream():
         vobject.base.readOne(bad_stream)
 
 
+def test_empty_stream():
+    """
+    An empty or whitespace-only stream has no components and used to raise a
+    bare StopIteration; it should raise ParseError.
+    """
+    for stream in ("", "   ", "\n\n\t"):
+        with pytest.raises(vobject.base.ParseError):
+            vobject.base.readOne(stream)
+
+
 def test_bad_line():
     """
     Test bad line in ics file
