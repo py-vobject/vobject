@@ -185,6 +185,32 @@ class TestCalendarSerializing(unittest.TestCase):
         card = base.readOne(raw)
         self.assertIsNotNone(card)
 
+    def test_parsing_folded_value(self):
+        """
+        Test a folded logical line, using vObject folding (a leading space).
+        """
+        raw = "BEGIN:XXX\r\n" \
+            + "PROPERTY:start\r\n" \
+            + "  middle \r\n" \
+            + " end\r\n" \
+            + "END:XXX\r\n"
+        obj = base.readOne(raw)
+        self.assertEqual(obj.contents['property'][0].value, "start middle end")
+
+    def test_parsing_folded_value_with_blank_line(self):
+        """
+        Test a folded logical line, with an empty link save for the folding space.
+        """
+        raw = "BEGIN:XXX\r\n" \
+            + "PROPERTY:start\r\n" \
+            + "  pre-blank\r\n" \
+            + " \r\n" \
+            + "  post-blank\r\n" \
+            + "  end\r\n" \
+            + "END:XXX\r\n"
+        obj = base.readOne(raw)
+        self.assertEqual(obj.contents['property'][0].value, "start pre-blank post-blank end")
+
     def test_parsing_error_line_number(self):
         """
         Check that the line number reported for a parsing error is correct.
