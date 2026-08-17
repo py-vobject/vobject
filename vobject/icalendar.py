@@ -400,7 +400,7 @@ class RecurringComponent(Component):
 
     def getrruleset(self, addRDate=False):
         """
-        Get an rruleset created from self.
+        Get an rruleset created from this component.
 
         If addRDate is True, add an RDATE for dtstart if it's not included in
         an RRULE or RDATE, and count is decremented if it exists.
@@ -442,9 +442,17 @@ class RecurringComponent(Component):
                     elif type(line.value[0]) == datetime.date:
                         for dt in line.value:
                             addfunc(datetime.datetime(dt.year, dt.month, dt.day))
+                    elif type(line.value[0] == type(tuple())):
+                        # PERIOD can be (datetime,datetime) or (datetime,duration)
+                        period = line.value[0]
+                        if type(period[1]) == datetime.datetime:
+                            addfunc(period[0])
+                        elif type(period[1]) == datetime.timedelta:
+                            addfunc(period[0])
+                        else:
+                            raise TypeError("Failed to convert PERIOD value")
                     else:
-                        # ignore RDATEs with PERIOD values for now
-                        pass
+                        raise TypeError("Failed to convert RDATE value")
                 elif name in RULENAMES:
                     # a Ruby iCalendar library escapes semi-colons in rrules,
                     # so also remove any backslashes
