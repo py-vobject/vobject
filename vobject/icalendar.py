@@ -411,9 +411,28 @@ class RecurringComponent(Component):
 
         self.isNative = True
 
+    def get_rruleset_rdate_exdate(self, line, addfunc):
+        """Add RDATE and EXDATE properties to the rruleset."""
+        if type(line.value[0]) is datetime.datetime:
+            list(map(addfunc, line.value))
+        elif type(line.value[0]) is datetime.date:
+            for dt in line.value:
+                addfunc(datetime.datetime(dt.year, dt.month, dt.day))
+        elif type(line.value[0] is type(tuple())):
+            # PERIOD can be (datetime,datetime) or (datetime,duration)
+            period = line.value[0]
+            if type(period[1]) is datetime.datetime:
+                addfunc(period[0])
+            elif type(period[1]) is datetime.timedelta:
+                addfunc(period[0])
+            else:
+                raise TypeError("Failed to convert PERIOD value")
+        else:
+            raise TypeError("Failed to convert RDATE value")
+
     def getrruleset(self, addRDate=False):
         """
-        Get an rruleset created from self.
+        Get an rruleset created from this component.
 
         If addRDate is True, add an RDATE for dtstart if it's not included in
         an RRULE or RDATE, and count is decremented if it exists.
@@ -450,14 +469,7 @@ class RecurringComponent(Component):
                         return None
 
                 if name in DATENAMES:
-                    if type(line.value[0]) is datetime.datetime:
-                        list(map(addfunc, line.value))
-                    elif type(line.value[0]) is datetime.date:
-                        for dt in line.value:
-                            addfunc(datetime.datetime(dt.year, dt.month, dt.day))
-                    else:
-                        # ignore RDATEs with PERIOD values for now
-                        pass
+                    self.get_rruleset_rdate_exdate(line, addfunc)
                 elif name in RULENAMES:
                     # a Ruby iCalendar library escapes semi-colons in rrules,
                     # so also remove any backslashes

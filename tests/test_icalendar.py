@@ -539,6 +539,183 @@ def test_rrdate_with_period():
     assert raw == serialized
 
 
+def test_recurrence_rdate_implicit_datetime_value():
+    raw = (
+        "BEGIN:VCALENDAR\r\n"
+        + "VERSION:2.0\r\n"
+        + "PRODID:test\r\n"
+        + "BEGIN:VEVENT\r\n"
+        + "UID:test\r\n"
+        + "DTSTART:20000101T000000Z\r\n"
+        + "DTSTAMP:20000101T000000Z\r\n"
+        + "DURATION:PT1H\r\n"
+        + "RDATE:20000104T090000Z\r\n"
+        + "END:VEVENT\r\n"
+        + "END:VCALENDAR\r\n"
+    )
+    cal = vobject.readOne(raw)
+    rrs = cal.vevent.getrruleset()
+    dates = list(rrs.xafter(dateutil.parser.parse("19700101T000000Z")))
+    assert len(dates) == 1
+    assert dates[0] == dateutil.parser.parse("20000104T090000Z")
+
+
+def test_recurrence_rdate_bad_implicit_datetime_value():
+    raw = (
+        "BEGIN:VCALENDAR\r\n"
+        + "VERSION:2.0\r\n"
+        + "PRODID:test\r\n"
+        + "BEGIN:VEVENT\r\n"
+        + "UID:test\r\n"
+        + "DTSTART:20000101T000000Z\r\n"
+        + "DTSTAMP:20000101T000000Z\r\n"
+        + "DURATION:PT1H\r\n"
+        + "RDATE:bogus\r\n"
+        + "END:VEVENT\r\n"
+        + "END:VCALENDAR\r\n"
+    )
+    with pytest.raises(vobject.base.ParseError):
+        vobject.readOne(raw)
+
+
+def test_recurrence_rate_explicit_datetime_value():
+    raw = (
+        "BEGIN:VCALENDAR\r\n"
+        + "VERSION:2.0\r\n"
+        + "PRODID:test\r\n"
+        + "BEGIN:VEVENT\r\n"
+        + "UID:test\r\n"
+        + "DTSTART:20000101T000000Z\r\n"
+        + "DTSTAMP:20000101T000000Z\r\n"
+        + "DURATION:PT1H\r\n"
+        + "RDATE;VALUE=DATE-TIME:20000104T090000Z\r\n"
+        + "END:VEVENT\r\n"
+        + "END:VCALENDAR\r\n"
+    )
+    cal = vobject.readOne(raw)
+    rrs = cal.vevent.getrruleset()
+    dates = list(rrs.xafter(dateutil.parser.parse("19700101T000000Z")))
+    assert len(dates) == 1
+    assert dates[0] == dateutil.parser.parse("20000104T090000Z")
+
+
+def test_recurrence_rdate_bad_explicit_datetime_value():
+    raw = (
+        "BEGIN:VCALENDAR\r\n"
+        + "VERSION:2.0\r\n"
+        + "PRODID:test\r\n"
+        + "BEGIN:VEVENT\r\n"
+        + "UID:test\r\n"
+        + "DTSTART:20000101T000000Z\r\n"
+        + "DTSTAMP:20000101T000000Z\r\n"
+        + "DURATION:PT1H\r\n"
+        + "RDATE;VALUE=DATE-TIME:bogus\r\n"
+        + "END:VEVENT\r\n"
+        + "END:VCALENDAR\r\n"
+    )
+    with pytest.raises(vobject.base.ParseError):
+        vobject.readOne(raw)
+
+
+def test_recurrence_rdate_explicit_date_value():
+    raw = (
+        "BEGIN:VCALENDAR\r\n"
+        + "VERSION:2.0\r\n"
+        + "PRODID:test\r\n"
+        + "BEGIN:VEVENT\r\n"
+        + "UID:test\r\n"
+        + "DTSTART:20000101T000000Z\r\n"
+        + "DTSTAMP:20000101T000000Z\r\n"
+        + "DURATION:PT1H\r\n"
+        + "RDATE;VALUE=DATE:20000104\r\n"
+        + "END:VEVENT\r\n"
+        + "END:VCALENDAR\r\n"
+    )
+    cal = vobject.readOne(raw)
+    rrs = cal.vevent.getrruleset()
+    dates = list(rrs.xafter(dateutil.parser.parse("19700101")))
+    assert len(dates) == 1
+    assert dates[0] == dateutil.parser.parse("20000104")
+
+
+def test_recurrence_rdate_bad_explicit_date_value():
+    raw = (
+        "BEGIN:VCALENDAR\r\n"
+        + "VERSION:2.0\r\n"
+        + "PRODID:test\r\n"
+        + "BEGIN:VEVENT\r\n"
+        + "UID:test\r\n"
+        + "DTSTART:20000101T000000Z\r\n"
+        + "DTSTAMP:20000101T000000Z\r\n"
+        + "DURATION:PT1H\r\n"
+        + "RDATE;VALUE=DATE:bogus\r\n"
+        + "END:VEVENT\r\n"
+        + "END:VCALENDAR\r\n"
+    )
+    with pytest.raises(vobject.base.ParseError):
+        vobject.readOne(raw)
+
+
+def test_recurrence_rdate_period_datetimes_value():
+    raw = (
+        "BEGIN:VCALENDAR\r\n"
+        + "VERSION:2.0\r\n"
+        + "PRODID:test\r\n"
+        + "BEGIN:VEVENT\r\n"
+        + "UID:test\r\n"
+        + "DTSTART:20000101T000000Z\r\n"
+        + "DTSTAMP:20000101T000000Z\r\n"
+        + "DURATION:PT1H\r\n"
+        + "RDATE;VALUE=PERIOD:20000104T090000Z/20000104T110000Z\r\n"
+        + "END:VEVENT\r\n"
+        + "END:VCALENDAR\r\n"
+    )
+    cal = vobject.readOne(raw)
+    rrs = cal.vevent.getrruleset()
+    dates = list(rrs.xafter(dateutil.parser.parse("19700101T000000Z")))
+    assert len(dates) == 1
+    assert dates[0] == dateutil.parser.parse("20000104T090000Z")
+
+
+def test_recurrence_rdate_period_datetime_duration_value():
+    raw = (
+        "BEGIN:VCALENDAR\r\n"
+        + "VERSION:2.0\r\n"
+        + "PRODID:test\r\n"
+        + "BEGIN:VEVENT\r\n"
+        + "UID:test\r\n"
+        + "DTSTART:20000101T000000Z\r\n"
+        + "DTSTAMP:20000101T000000Z\r\n"
+        + "DURATION:PT1H\r\n"
+        + "RDATE;VALUE=PERIOD:20000104T090000Z/PT3H\r\n"
+        + "END:VEVENT\r\n"
+        + "END:VCALENDAR\r\n"
+    )
+    cal = vobject.readOne(raw)
+    rrs = cal.vevent.getrruleset()
+    dates = list(rrs.xafter(dateutil.parser.parse("19700101T000000Z")))
+    assert len(dates) == 1
+    assert dates[0] == dateutil.parser.parse("20000104T090000Z")
+
+
+def test_recurrence_rdate_bad_explicit_period_value():
+    raw = (
+        "BEGIN:VCALENDAR\r\n"
+        + "VERSION:2.0\r\n"
+        + "PRODID:test\r\n"
+        + "BEGIN:VEVENT\r\n"
+        + "UID:test\r\n"
+        + "DTSTART:20000101T000000Z\r\n"
+        + "DTSTAMP:20000101T000000Z\r\n"
+        + "DURATION:PT1H\r\n"
+        + "RDATE;VALUE=PERIOD:bogus\r\n"
+        + "END:VEVENT\r\n"
+        + "END:VCALENDAR\r\n"
+    )
+    with pytest.raises(vobject.base.ParseError):
+        vobject.readOne(raw)
+
+
 def test_issue50():
     """
     Ensure leading spaces in a DATE-TIME value are ignored when not in

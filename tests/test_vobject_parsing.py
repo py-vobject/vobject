@@ -165,6 +165,32 @@ def test_bad_line():
     assert str(cal.vevent.x_bad_underscore) == "<X-BAD-UNDERSCORE{}TRUE>"
 
 
+def test_parsing_folded_value():
+    """
+    Test a folded logical line, using vObject folding (a leading space).
+    """
+    raw = "BEGIN:XXX\r\n" + "PROPERTY:start\r\n" + "  middle \r\n" + " end\r\n" + "END:XXX\r\n"
+    obj = vobject.readOne(raw)
+    assert obj.contents["property"][0].value == "start middle end"
+
+
+def test_parsing_folded_value_with_blank_line():
+    """
+    Test a folded logical line, with an empty link save for the folding space.
+    """
+    raw = (
+        "BEGIN:XXX\r\n"
+        + "PROPERTY:start\r\n"
+        + "  pre-blank X\r\n"
+        + " \r\n"
+        + " X post-blank\r\n"
+        + "  end\r\n"
+        + "END:XXX\r\n"
+    )
+    obj = vobject.readOne(raw)
+    assert obj.contents["property"][0].value == "start pre-blank XX post-blank end"
+
+
 def test_parse_params():
     """
     Test parsing parameters
