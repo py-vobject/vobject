@@ -332,7 +332,12 @@ class ContentLine(VBase):
 
     def __eq__(self, other):
         try:
-            return (self.name == other.name) and (self.params == other.params) and (self.value == other.value)
+            return (
+                (self.name == other.name)
+                and (self.params == other.params)
+                and (self.singletonparams == other.singletonparams)
+                and (self.value == other.value)
+            )
         except AttributeError:
             return False
 
@@ -345,9 +350,17 @@ class ContentLine(VBase):
         """
         try:
             if name.endswith("_param"):
-                return self.params[toVName(name, 6, True)][0]
+                stripped_name = toVName(name, 6, True)
+                if stripped_name in self.singletonparams:
+                    return stripped_name
+                else:
+                    return self.params[stripped_name][0]
             elif name.endswith("_paramlist"):
-                return self.params[toVName(name, 10, True)]
+                stripped_name = toVName(name, 10, True)
+                if stripped_name in self.singletonparams:
+                    return None
+                else:
+                    return self.params[stripped_name]
             else:
                 raise AttributeError(name)
         except KeyError:
@@ -361,8 +374,17 @@ class ContentLine(VBase):
         which are legal in IANA tokens.
         """
         if name.endswith("_param"):
-            self.params[toVName(name, 6, True)] = value if type(value) is list else [value]
+            stripped_name = toVName(name, 6, True)
+            if value is None:
+                if stripped_name not in self.singletonparams:
+                    self.singletonparams.append(stripped_name)
+            elif type(value) is list:
+                self.params[stripped_name] = value
+            else:
+                self.params[stripped_name] = [value]
         elif name.endswith("_paramlist"):
+            if value is None:
+                raise VObjectError("Cannot set standalone parameter using _paramlist suffix")
             if type(value) is list:
                 self.params[toVName(name, 10, True)] = value
             else:
@@ -375,15 +397,28 @@ class ContentLine(VBase):
                 object.__setattr__(self, name, value)
 
     def __delattr__(self, name):
-        try:
-            if name.endswith("_param"):
-                del self.params[toVName(name, 6, True)]
-            elif name.endswith("_paramlist"):
-                del self.params[toVName(name, 10, True)]
+        if name.endswith("_param"):
+            stripped_name = toVName(name, 6, True)
+            if stripped_name in self.singletonparams:
+                self.singletonparams.remove(stripped_name)
             else:
+                try:
+                    del self.params[stripped_name]
+                except KeyError:
+                    raise AttributeError(stripped_name)
+        elif name.endswith("_paramlist"):
+            stripped_name = toVName(name, 10, True)
+            if stripped_name in self.singletonparams:
+                raise VObjectError("Cannot delete standalone parameter using _paramlist suffix")
+            try:
+                del self.params[stripped_name]
+            except KeyError:
+                raise AttributeError(stripped_name)
+        else:
+            try:
                 object.__delattr__(self, name)
-        except KeyError:
-            raise AttributeError(name)
+            except KeyError:
+                raise AttributeError(name)
 
     def valueRepr(self):
         """
@@ -397,15 +432,15 @@ class ContentLine(VBase):
 
     def __str__(self):
         try:
-            return f"<{self.name}{self.params}{self.valueRepr()}>"
+            return f"<{self.name}{self.params}{self.singletonparams}{self.valueRepr()}>"
         except UnicodeEncodeError:
-            return f"<{self.name}{self.params}{self.valueRepr().encode('utf-8')}>"
+            return f"<{self.name}{self.params}{self.singletonparams}{self.valueRepr().encode('utf-8')}>"
 
     def __repr__(self):
         return self.__str__()
 
     def __unicode__(self):
-        return f"<{self.name}{self.params}{self.valueRepr()}>"
+        return f"<{self.name}{self.params}{self.singletonparams}{self.valueRepr()}>"
 
     def prettyPrint(self, level=0, tabwidth=3):
         pre = " " * level * tabwidth
@@ -413,7 +448,9 @@ class ContentLine(VBase):
         if self.params:
             print(pre, "params for ", self.name + ":")
             for k in self.params.keys():
-                print(pre + " " * tabwidth, k, self.params[k])
+                print(pre + (" " * tabwidth) + k + "=" + ",".join(self.params[k]))
+        if self.singletonparams:
+            print(pre + (" " * tabwidth) + ",".join(self.singletonparams))
 
 
 class Component(VBase):
@@ -1038,6 +1075,11 @@ def defaultSerialize(obj, buf, lineLength):
         if obj.group is not None:
             s.write(obj.group + ".")
         s.write(str_(obj.name.upper()))
+        for param in obj.singletonparams:
+            try:
+                s.write(f";{param}")
+            except (UnicodeDecodeError, UnicodeEncodeError):
+                s.write(f";{param.encode('utf-8')}")
         keys = sorted(obj.params.keys())
         for key in keys:
             paramstr = ",".join(dquoteEscape(p) for p in obj.params[key])

@@ -341,10 +341,10 @@ def test_vtimezone_creation():
     """
     tzs = dateutil.tz.tzical(io.StringIO(timezones))
     pacific = vobject.icalendar.TimezoneComponent(tzs.get("US/Pacific"))
-    assert str(pacific) == "<VTIMEZONE | <TZID{}US/Pacific>>"
+    assert str(pacific) == "<VTIMEZONE | <TZID{}[]US/Pacific>>"
 
     santiago = vobject.icalendar.TimezoneComponent(tzs.get("Santiago"))
-    assert str(santiago) == "<VTIMEZONE | <TZID{}Santiago>>"
+    assert str(santiago) == "<VTIMEZONE | <TZID{}[]Santiago>>"
 
     for year in range(2001, 2010):
         for month in (2, 9):

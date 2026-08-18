@@ -113,10 +113,10 @@ def test_readOne():
     silly = vobject.base.readOne(cal)
     assert (
         str(silly)
-        == "<SILLYPROFILE| [<MORESTUFF{}this line is not folded, but in practice probably ought to be, as it is "
-        "exceptionally long, and moreover demonstratively stupid>, <SILLYNAME{}name>, <STUFF{}foldedline>]>"
+        == "<SILLYPROFILE| [<MORESTUFF{}['asinine']this line is not folded, but in practice probably ought to be, as it is "
+        "exceptionally long, and moreover demonstratively stupid>, <SILLYNAME{}[]name>, <STUFF{}[]foldedline>]>"
     )
-    assert str(silly.stuff) == "<STUFF{}foldedline>"
+    assert str(silly.stuff) == "<STUFF{}[]foldedline>"
 
 
 def test_importing():
@@ -125,7 +125,7 @@ def test_importing():
     """
     cal = standard_test_text
     c = vobject.base.readOne(cal, validate=True)
-    assert str(c.vevent.valarm.trigger) == "<TRIGGER{}-1 day, 0:00:00>"
+    assert str(c.vevent.valarm.trigger) == "<TRIGGER{}[]-1 day, 0:00:00>"
     assert str(c.vevent.dtstart.value) == "2002-10-28 14:00:00-08:00"
     assert isinstance(c.vevent.dtstart.value, datetime.datetime)
     assert str(c.vevent.dtend.value) == "2002-10-28 15:00:00-08:00"
@@ -133,7 +133,7 @@ def test_importing():
     assert c.vevent.dtstamp.value == datetime.datetime(2002, 10, 28, 1, 17, 6, tzinfo=datetime.timezone.utc)
 
     vevent = c.vevent.transformFromNative()
-    assert str(vevent.rrule) == "<RRULE{}FREQ=Weekly;COUNT=10>"
+    assert str(vevent.rrule) == "<RRULE{}[]FREQ=Weekly;COUNT=10>"
 
 
 def test_bad_stream():
@@ -162,7 +162,7 @@ def test_bad_line():
         vobject.base.readOne(bad_line)
 
     cal = vobject.base.readOne(bad_line, ignoreUnreadable=True)
-    assert str(cal.vevent.x_bad_underscore) == "<X-BAD-UNDERSCORE{}TRUE>"
+    assert str(cal.vevent.x_bad_underscore) == "<X-BAD-UNDERSCORE{}[]TRUE>"
 
 
 def test_parsing_folded_value():
