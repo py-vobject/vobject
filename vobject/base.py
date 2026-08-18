@@ -9,9 +9,6 @@ import re
 import six
 import sys
 
-# Package version
-VERSION = "0.9.9"
-
 
 # ------------------------------------ Python 2/3 compatibility challenges  ----
 # Python 3 no longer has a basestring type, so....
@@ -1331,3 +1328,15 @@ def newFromBehavior(name, id=None):
 def backslashEscape(s):
     s = s.replace("\\", "\\\\").replace(";", "\\;").replace(",", "\\,")
     return s.replace("\r\n", "\\n").replace("\n", "\\n").replace("\r", "\\n")
+
+
+def get_prodid():
+    """Return package's PRODID value.
+
+    Created and cached the first time this is called.  The local import
+    avoids a circular reference."""
+    if not hasattr(get_prodid,  "_prodid"):
+        from . import VERSION
+        get_prodid._prodid = u"-//PYVOBJECT//NONSGML Version %s//EN" % VERSION
+
+    return get_prodid._prodid

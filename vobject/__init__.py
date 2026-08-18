@@ -76,8 +76,12 @@ VObject Overview
 
 """
 
-from .base import VERSION, newFromBehavior, readOne, readComponents
+from .base import newFromBehavior, readOne, readComponents
 from . import icalendar, vcard
+
+
+# Package version
+VERSION = "0.9.9"
 
 
 def iCalendar():

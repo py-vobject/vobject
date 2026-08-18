@@ -29,8 +29,8 @@ except ImportError:
     pytz = Pytz  # keeps quantifiedcode happy
 
 from . import behavior
-from .base import (VERSION, VObjectError, NativeError, ValidateError, ParseError,
-                   Component, ContentLine, logger, registerBehavior,
+from .base import (VObjectError, NativeError, ValidateError, ParseError,
+                   Component, ContentLine, get_prodid, logger, registerBehavior,
                    backslashEscape, foldOneLine)
 
 
@@ -38,7 +38,6 @@ from .base import (VERSION, VObjectError, NativeError, ValidateError, ParseError
 DATENAMES = ("rdate", "exdate")
 RULENAMES = ("exrule", "rrule")
 DATESANDRULES = ("exrule", "rrule", "rdate", "exdate")
-PRODID = u"-//PYVOBJECT//NONSGML Version %s//EN" % VERSION
 
 WEEKDAYS = "MO", "TU", "WE", "TH", "FR", "SA", "SU"
 FREQUENCIES = ('YEARLY', 'MONTHLY', 'WEEKLY', 'DAILY', 'HOURLY', 'MINUTELY',
@@ -973,7 +972,7 @@ class VCalendar2_0(VCalendarComponentBehavior):
             if comp.behavior is not None:
                 comp.behavior.generateImplicitParameters(comp)
         if not hasattr(obj, 'prodid'):
-            obj.add(ContentLine('PRODID', [], PRODID))
+            obj.add(ContentLine('PRODID', [], get_prodid()))
         if not hasattr(obj, 'version'):
             obj.add(ContentLine('VERSION', [], cls.versionString))
         tzidsUsed = {}
