@@ -3,6 +3,7 @@
 from __future__ import print_function
 
 import datetime
+
 import dateutil
 import re
 import six
@@ -17,7 +18,7 @@ from vobject import VERSION, base, iCalendar
 from vobject import icalendar
 
 from vobject.base import __behaviorRegistry as behavior_registry
-from vobject.base import ContentLine, parseLine, ParseError
+from vobject.base import ContentLine, parseLine, ParseError, VObjectError
 from vobject.base import readComponents, textLineToContentLine
 
 from vobject.change_tz import change_tz
@@ -249,7 +250,93 @@ class TestCalendarSerializing(unittest.TestCase):
         self.assertEqual(lines[2][1], 5)
         self.assertEqual(lines[3][1], 6)
 
+    def test_contentline_parameter_getattr(self):
+        cl = textLineToContentLine("NAME;P1=P1V1,P1V2;P2=P2V1;P3;P4:VALUE\r\n")
+        self.assertEqual(cl.p1_param, "P1V1")
+        self.assertEqual(cl.p2_param, "P2V1")
+        self.assertEqual(cl.p3_param, "P3")
+        self.assertEqual(cl.p4_param, "P4")
+        self.assertEqual(cl.p1_paramlist, ["P1V1", "P1V2"])
+        self.assertEqual(cl.p2_paramlist, ["P2V1"])
+        self.assertEqual(cl.p3_paramlist, None)
+        self.assertEqual(cl.p4_paramlist, None)
 
+    def test_contentline_parameter_setattr(self):
+        cl = textLineToContentLine("NAME:VALUE\r\n")
+        self.assertEqual(len(cl.params), 0)
+        self.assertEqual(len(cl.singletonparams), 0)
+
+        cl.p1_param = None
+        self.assertEqual(len(cl.singletonparams), 1)
+        self.assertEqual(cl.singletonparams[0], "P1")
+
+        cl.p2_param = None
+        self.assertEqual(len(cl.singletonparams), 2)
+        self.assertEqual(cl.singletonparams[0], "P1")
+        self.assertEqual(cl.singletonparams[1], "P2")
+
+        cl.p3_param = "P3V1"
+        self.assertEqual(len(cl.params), 1)
+        self.assertEqual("P3" in cl.params, True)
+        self.assertEqual(cl.params["P3"], ["P3V1"])
+
+        cl.p3_param = "P3V2"
+        self.assertEqual(len(cl.params), 1)
+        self.assertEqual("P3" in cl.params, True)
+        self.assertEqual(cl.params["P3"], ["P3V2"])
+
+        cl.p3_param = ["P3V1", "P3V2"]
+        self.assertEqual(len(cl.params), 1)
+        self.assertEqual("P3" in cl.params, True)
+        self.assertEqual(cl.params["P3"], ["P3V1", "P3V2"])
+
+        cl.p4_paramlist = ["P4V1", "P4V2"]
+        self.assertEqual(len(cl.params), 2)
+        self.assertEqual("P4" in cl.params, True)
+        self.assertEqual(cl.params["P4"], ["P4V1", "P4V2"])
+
+        with self.assertRaises(VObjectError) as error:
+            cl.p4_paramlist = None
+        self.assertEqual(error.exception.msg, "Cannot set standalone parameter using _paramlist suffix")
+        self.assertEqual(cl.params["P4"], ["P4V1", "P4V2"])
+
+        with self.assertRaises(VObjectError) as error:
+            cl.p4_paramlist = ("no", "nein", "non", "nyet")
+        self.assertEqual(error.exception.msg, "Parameter list set to a non-list")
+        self.assertEqual(cl.params["P4"], ["P4V1", "P4V2"])
+
+    def test_contentline_parameter_delattr(self):
+        cl = textLineToContentLine("NAME;P1=P1V1,P1V2;P2=P2V1;P3;P4:VALUE\r\n")
+        self.assertEqual(len(cl.params), 2)
+        self.assertEqual("P1" in cl.params, True)
+        self.assertEqual(cl.params["P1"], ["P1V1", "P1V2"])
+        self.assertEqual("P2" in cl.params, True)
+        self.assertEqual(cl.params["P2"], ["P2V1"])
+
+        self.assertEqual(len(cl.singletonparams), 2)
+        self.assertEqual("P3" in cl.singletonparams, True)
+        self.assertEqual("P4" in cl.singletonparams, True)
+
+        del cl.p4_param
+        self.assertEqual(len(cl.singletonparams), 1)
+        self.assertEqual("P3" in cl.singletonparams, True)
+        self.assertEqual("P4" in cl.singletonparams, False)
+
+        with self.assertRaises(AttributeError) as error:
+            del cl.p4_param
+        self.assertEqual(error.exception.args[0], "P4")
+
+        with self.assertRaises(VObjectError) as error:
+            del cl.p3_paramlist
+
+        del cl.p3_param
+        self.assertEqual(len(cl.singletonparams), 0)
+
+        del cl.p1_param
+        self.assertEqual(len(cl.params), 1)
+
+        del cl.p2_paramlist
+        self.assertEqual(len(cl.params), 0)
 
     @staticmethod
     def test_ical_to_hcal():
@@ -348,11 +435,11 @@ class TestBehaviors(unittest.TestCase):
         parseRDate = MultiDateBehavior.transformToNative
         self.assertEqual(
             str(parseRDate(textLineToContentLine("RDATE;VALUE=DATE:19970304,19970504,19970704,19970904"))),
-            "<RDATE{'VALUE': ['DATE']}[datetime.date(1997, 3, 4), datetime.date(1997, 5, 4), datetime.date(1997, 7, 4), datetime.date(1997, 9, 4)]>"
+            "<RDATE{'VALUE': ['DATE']}[][datetime.date(1997, 3, 4), datetime.date(1997, 5, 4), datetime.date(1997, 7, 4), datetime.date(1997, 9, 4)]>"
         )
         self.assertEqual(
             str(parseRDate(textLineToContentLine("RDATE;VALUE=PERIOD:19960403T020000Z/19960403T040000Z,19960404T010000Z/PT3H"))),
-            "<RDATE{'VALUE': ['PERIOD']}[(datetime.datetime(1996, 4, 3, 2, 0, tzinfo=tzutc()), datetime.datetime(1996, 4, 3, 4, 0, tzinfo=tzutc())), (datetime.datetime(1996, 4, 4, 1, 0, tzinfo=tzutc()), " + ("datetime.timedelta(0, 10800)" if sys.version_info < (3,7) else "datetime.timedelta(seconds=10800)") + ")]>"
+            "<RDATE{'VALUE': ['PERIOD']}[][(datetime.datetime(1996, 4, 3, 2, 0, tzinfo=tzutc()), datetime.datetime(1996, 4, 3, 4, 0, tzinfo=tzutc())), (datetime.datetime(1996, 4, 4, 1, 0, tzinfo=tzutc()), " + ("datetime.timedelta(0, 10800)" if sys.version_info < (3,7) else "datetime.timedelta(seconds=10800)") + ")]>"
         )
 
     def test_periodBehavior(self):
@@ -442,8 +529,8 @@ class TestVobject(unittest.TestCase):
         """
         cal = next(readComponents(self.simple_test_cal))
 
-        self.assertEqual(str(cal), "<VCALENDAR| [<VEVENT| [<SUMMARY{'BLAH': ['hi!']}Bastille Day Party>]>]>")
-        self.assertEqual(str(cal.vevent.summary), "<SUMMARY{'BLAH': ['hi!']}Bastille Day Party>")
+        self.assertEqual(str(cal), "<VCALENDAR| [<VEVENT| [<SUMMARY{'BLAH': ['hi!']}[]Bastille Day Party>]>]>")
+        self.assertEqual(str(cal.vevent.summary), "<SUMMARY{'BLAH': ['hi!']}[]Bastille Day Party>")
 
     def test_parseLine(self):
         """
@@ -485,11 +572,11 @@ class TestGeneralFileParsing(unittest.TestCase):
         silly = base.readOne(cal)
         self.assertEqual(
             str(silly),
-            "<SILLYPROFILE| [<MORESTUFF{}this line is not folded, but in practice probably ought to be, as it is exceptionally long, and moreover demonstratively stupid>, <SILLYNAME{}name>, <STUFF{}foldedline>]>"
+            "<SILLYPROFILE| [<MORESTUFF{}['asinine']this line is not folded, but in practice probably ought to be, as it is exceptionally long, and moreover demonstratively stupid>, <SILLYNAME{}[]name>, <STUFF{}[]foldedline>]>"
         )
         self.assertEqual(
             str(silly.stuff),
-            "<STUFF{}foldedline>"
+            "<STUFF{}[]foldedline>"
         )
 
     def test_importing(self):
@@ -500,7 +587,7 @@ class TestGeneralFileParsing(unittest.TestCase):
         c = base.readOne(cal, validate=True)
         self.assertEqual(
             str(c.vevent.valarm.trigger),
-            "<TRIGGER{}-1 day, 0:00:00>"
+            "<TRIGGER{}[]-1 day, 0:00:00>"
         )
 
         self.assertEqual(
@@ -525,7 +612,7 @@ class TestGeneralFileParsing(unittest.TestCase):
         vevent = c.vevent.transformFromNative()
         self.assertEqual(
             str(vevent.rrule),
-            "<RRULE{}FREQ=Weekly;COUNT=10>"
+            "<RRULE{}[]FREQ=Weekly;COUNT=10>"
         )
 
     def test_bad_stream(self):
@@ -545,7 +632,7 @@ class TestGeneralFileParsing(unittest.TestCase):
         newcal = base.readOne(cal, ignoreUnreadable=True)
         self.assertEqual(
             str(newcal.vevent.x_bad_underscore),
-            '<X-BAD-UNDERSCORE{}TRUE>'
+            '<X-BAD-UNDERSCORE{}[]TRUE>'
         )
 
     def test_parseParams(self):
@@ -655,6 +742,42 @@ class TestVcards(unittest.TestCase):
             new_card = base.readOne(card.serialize())
             self.assertEqual(new_card.org.value, card.org.value)
             card = new_card
+
+    def test_vcard_21_parameters_separate(self):
+        raw = "BEGIN:VCARD\r\n" \
+            + "VERSION:2.1\r\n" \
+            + "N:John;Doe;;;\r\n" \
+            + "FN:John Doe\r\n" \
+            + "TEL;TYPE=WORK:225\r\n" \
+            + "TEL;TYPE=CELL;TYPE=PREF:+12345678901\r\n" \
+            + "END:VCARD\r\n"
+        card = base.readOne(raw)
+        text = card.serialize()
+        assert text is not None
+
+    def test_vcard_21_parameters_combined(self):
+        raw = "BEGIN:VCARD\r\n" \
+            + "VERSION:2.1\r\n" \
+            + "N:John;Doe;;;\r\n" \
+            + "FN:John Doe\r\n" \
+            + "TEL;TYPE=WORK:225\r\n" \
+            + "TEL;TYPE=CELL,PREF:+12345678901\r\n" \
+            + "END:VCARD\r\n"
+        card = base.readOne(raw)
+        text = card.serialize()
+        assert text is not None
+
+    def test_vcard_21_parameters_compact(self):
+        raw = "BEGIN:VCARD\r\n" \
+            + "VERSION:2.1\r\n" \
+            + "N:John;Doe;;;\r\n" \
+            + "FN:John Doe\r\n" \
+            + "TEL;WORK:225\r\n" \
+            + "TEL;CELL;PREF:+12345678901\r\n" \
+            + "END:VCARD\r\n"
+        card = base.readOne(raw)
+        text = card.serialize()
+        assert text is not None
 
 
 class TestIcalendar(unittest.TestCase):
@@ -772,12 +895,12 @@ class TestIcalendar(unittest.TestCase):
         pacific = icalendar.TimezoneComponent(tzs.get('US/Pacific'))
         self.assertEqual(
             str(pacific),
-            "<VTIMEZONE | <TZID{}US/Pacific>>"
+            "<VTIMEZONE | <TZID{}[]US/Pacific>>"
         )
         santiago = icalendar.TimezoneComponent(tzs.get('Santiago'))
         self.assertEqual(
             str(santiago),
-            "<VTIMEZONE | <TZID{}Santiago>>"
+            "<VTIMEZONE | <TZID{}[]Santiago>>"
         )
         for year in range(2001, 2010):
             for month in (2, 9):
