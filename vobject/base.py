@@ -63,6 +63,7 @@ DEFAULT_MAX_NESTING = 100
 
 # --------------------------------- Main classes -------------------------------
 
+
 class VBase:
     """
     Base class for ContentLine and Component.
