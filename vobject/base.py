@@ -63,7 +63,6 @@ DEFAULT_MAX_NESTING = 100
 
 # --------------------------------- Main classes -------------------------------
 
-
 class VBase:
     """
     Base class for ContentLine and Component.
@@ -775,7 +774,6 @@ P_LINE = rf"""
 : (?P<value> .* )$                             # value group
 """
 
-
 ' "%(qsafe_char)s*" | %(safe_char)s* '  # what is this line?? - never assigned?
 
 param_values_re = re.compile(P_PARAM_VALUE_GROUPED, re.VERBOSE)
@@ -1280,7 +1278,6 @@ def newFromBehavior(name, id_=None):
     return obj
 
 
-# --------------------------- Helper function ----------------------------------
 def backslashEscape(s):
     s = s.replace("\\", "\\\\").replace(";", "\\;").replace(",", "\\,")
     return s.replace("\r\n", "\\n").replace("\n", "\\n").replace("\r", "\\n")
