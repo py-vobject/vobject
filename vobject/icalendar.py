@@ -29,7 +29,6 @@ except ImportError:
 
 from . import behavior
 from .base import (
-    VERSION,
     Component,
     ContentLine,
     NativeError,
@@ -38,6 +37,7 @@ from .base import (
     VObjectError,
     backslashEscape,
     foldOneLine,
+    get_product_id,
     logger,
     registerBehavior,
 )
@@ -46,7 +46,6 @@ from .base import (
 DATENAMES = ("rdate", "exdate")
 RULENAMES = ("exrule", "rrule")
 DATESANDRULES = ("exrule", "rrule", "rdate", "exdate")
-PRODID = f"-//PYVOBJECT//NONSGML Version {VERSION}//EN"
 
 WEEKDAYS = "MO", "TU", "WE", "TH", "FR", "SA", "SU"
 FREQUENCIES = ("YEARLY", "MONTHLY", "WEEKLY", "DAILY", "HOURLY", "MINUTELY", "SECONDLY")
@@ -1004,7 +1003,7 @@ class VCalendar2_0(VCalendarComponentBehavior):
             if comp.behavior is not None:
                 comp.behavior.generateImplicitParameters(comp)
         if not hasattr(obj, "prodid"):
-            obj.add(ContentLine("PRODID", [], PRODID))
+            obj.add(ContentLine("PRODID", [], get_product_id()))
         if not hasattr(obj, "version"):
             obj.add(ContentLine("VERSION", [], cls.versionString))
         tzidsUsed = {}

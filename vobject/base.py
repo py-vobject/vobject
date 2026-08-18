@@ -7,9 +7,6 @@ import logging
 import re
 import sys
 
-# Package version
-VERSION = "1.0.0"
-
 # Removed python 2 compatibility code : flake8 fixes
 basestring = (str, bytes)
 unicode_type = str
@@ -1287,3 +1284,18 @@ def newFromBehavior(name, id_=None):
 def backslashEscape(s):
     s = s.replace("\\", "\\\\").replace(";", "\\;").replace(",", "\\,")
     return s.replace("\r\n", "\\n").replace("\n", "\\n").replace("\r", "\\n")
+
+
+def get_product_id():
+    """Return package's PRODID value.
+
+    Created and cached the first time this is called.  The local import
+    avoids a circular reference, which is here because setuptools needs
+    VERSION directly in __init__.py.  See Github issue #121."""
+    if not hasattr(get_product_id, "product_id"):
+        # pylint: disable=R0401
+        from . import VERSION
+
+        get_product_id.product_id = f"-//PYVOBJECT//NONSGML Version {VERSION}//EN"
+
+    return get_product_id.product_id
