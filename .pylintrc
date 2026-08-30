@@ -23,7 +23,6 @@ disable=
 	# W
 	fixme,
 	keyword-arg-before-vararg,
-	logging-format-interpolation,
 	protected-access,
 	raise-missing-from,
 	unspecified-encoding,
