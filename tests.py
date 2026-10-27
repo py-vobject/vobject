@@ -1283,6 +1283,34 @@ class TestIcalendar(unittest.TestCase):
         finally:
             sys.setrecursionlimit(default_recursion_limit)
 
+    def test_vtimezone_without_observances(self):
+        """
+        A VTIMEZONE holding only a TZID, without any STANDARD or DAYLIGHT
+        observance, must not make the whole calendar unparseable.
+        """
+        test_file = get_test_file("vtimezone_without_observances.ics")
+        cal = base.readOne(test_file)
+        self.assertIsNone(cal.vtimezone.tzinfo)
+        self.assertEqual(cal.vevent.summary.value, "Busy")
+
+    def test_vtimezone_without_observances_tzid_lookup(self):
+        """
+        The TZID of a VTIMEZONE without observances is resolved by name.
+        """
+        try:
+            import pytz  # NOQA
+        except ImportError:
+            return self.skipTest("pytz not installed")  # NOQA
+
+        test_file = get_test_file("vtimezone_without_observances.ics")
+        cal = base.readOne(test_file)
+        self.assertEqual(
+            cal.vevent.dtstart.value.astimezone(tzutc()),
+            datetime.datetime(2026, 12, 7, 12, 0, tzinfo=tzutc()))
+        self.assertEqual(
+            cal.vevent.dtend.value.astimezone(tzutc()),
+            datetime.datetime(2026, 12, 7, 13, 0, tzinfo=tzutc()))
+
 
 class TestChangeTZ(unittest.TestCase):
     """
