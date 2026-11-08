@@ -410,13 +410,19 @@ class RecurringComponent(Component):
 
         self.isNative = True
 
-    def get_rruleset_rdate_exdate(self, line, addfunc):
+    def get_rruleset_rdate_exdate(self, line, addfunc, dtstart=None):
         """Add RDATE and EXDATE properties to the rruleset."""
         if type(line.value[0]) is datetime.datetime:
             list(map(addfunc, line.value))
         elif type(line.value[0]) is datetime.date:
             for dt in line.value:
-                addfunc(datetime.datetime(dt.year, dt.month, dt.day))
+                if line.name.upper() == "EXDATE" and isinstance(dtstart, datetime.datetime):
+                    # An exclusion only takes effect if it equals an
+                    # occurrence, so give a DATE value the time of day and
+                    # time zone that DTSTART (and so every occurrence) has.
+                    addfunc(datetime.datetime.combine(dt, dtstart.timetz()))
+                else:
+                    addfunc(datetime.datetime(dt.year, dt.month, dt.day))
         elif type(line.value[0] is type(tuple())):
             # PERIOD can be (datetime,datetime) or (datetime,duration)
             period = line.value[0]
@@ -468,7 +474,7 @@ class RecurringComponent(Component):
                         return None
 
                 if name in DATENAMES:
-                    self.get_rruleset_rdate_exdate(line, addfunc)
+                    self.get_rruleset_rdate_exdate(line, addfunc, dtstart)
                 elif name in RULENAMES:
                     # a Ruby iCalendar library escapes semi-colons in rrules,
                     # so also remove any backslashes

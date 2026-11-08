@@ -716,6 +716,41 @@ def test_recurrence_rdate_bad_explicit_period_value():
         vobject.readOne(raw)
 
 
+def test_recurrence_exdate_date_value_with_datetime_dtstart():
+    """
+    Ensure an EXDATE given as a DATE excludes the occurrence on that day
+    when DTSTART is a DATE-TIME, instead of failing to compare a naive
+    exclusion with time zone aware occurrences.
+
+    See https://github.com/py-vobject/vobject/issues/68
+    """
+    raw = (
+        "BEGIN:VCALENDAR\r\n"
+        "VERSION:2.0\r\n"
+        "PRODID:test\r\n"
+        "BEGIN:VEVENT\r\n"
+        "UID:test\r\n"
+        "DTSTART:20160427T160000Z\r\n"
+        "DTSTAMP:20160529T080325Z\r\n"
+        "EXDATE;VALUE=DATE:20160504\r\n"
+        "EXDATE;VALUE=DATE:20160608\r\n"
+        "RRULE:FREQ=WEEKLY;UNTIL=20160615T160000Z;BYDAY=WE\r\n"
+        "END:VEVENT\r\n"
+        "END:VCALENDAR\r\n"
+    )
+    utc = dateutil.tz.tzutc()
+    expected = [
+        datetime.datetime(2016, m, d, 16, tzinfo=utc) for m, d in ((4, 27), (5, 11), (5, 18), (5, 25), (6, 1), (6, 15))
+    ]
+
+    cal = vobject.readOne(raw)
+    assert list(cal.vevent.getrruleset()) == expected
+
+    # Floating DTSTART: the excluded days are dropped as well.
+    cal = vobject.readOne(raw.replace("DTSTART:20160427T160000Z", "DTSTART:20160427T160000"))
+    assert list(cal.vevent.getrruleset()) == [dt.replace(tzinfo=None) for dt in expected]
+
+
 def test_issue50():
     """
     Ensure leading spaces in a DATE-TIME value are ignored when not in
