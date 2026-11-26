@@ -9,6 +9,7 @@ dynamic = ["version"]
 dependencies = [
     "python-dateutil >= 2.7.0",
     "pytz >= 2019.1",
+    "tzdata",
 ]
 requires-python = ">= 3.10"
 authors = [
