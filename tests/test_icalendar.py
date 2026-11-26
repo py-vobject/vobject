@@ -560,6 +560,25 @@ def test_recurrence_rdate_implicit_datetime_value():
     assert dates[0] == dateutil.parser.parse("20000104T090000Z")
 
 
+def test_serialize_rdate_implicit_datetime_value():
+    raw = (
+        "BEGIN:VCALENDAR\r\n"
+        + "VERSION:2.0\r\n"
+        + "PRODID:test\r\n"
+        + "BEGIN:VEVENT\r\n"
+        + "UID:test\r\n"
+        + "DTSTART:20000101T000000Z\r\n"
+        + "DTSTAMP:20000101T000000Z\r\n"
+        + "DURATION:PT1H\r\n"
+        + "RDATE:20000104T090000Z\r\n"
+        + "END:VEVENT\r\n"
+        + "END:VCALENDAR\r\n"
+    )
+    cal = vobject.readOne(raw)
+    serialized = cal.serialize()
+    assert "RDATE:20000104T090000Z" in serialized
+
+
 def test_recurrence_rdate_bad_implicit_datetime_value():
     raw = (
         "BEGIN:VCALENDAR\r\n"

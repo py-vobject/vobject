@@ -920,7 +920,7 @@ class MultiDateBehavior(behavior.Behavior):
                 transformed = []
                 tzid = None
                 for val in obj.value:
-                    if obj.value_param == "PERIOD":
+                    if getattr(obj, "value_param", "DATE-TIME").upper() == "PERIOD":
                         if type(val[0]) is datetime.datetime and type(val[1]) is datetime.timedelta:
                             transformed.append(periodToString(val))
                             continue
