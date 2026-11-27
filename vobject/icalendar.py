@@ -2,10 +2,12 @@
 """Definitions and behavior for iCalendar, also known as vCalendar 2.0"""
 
 import base64
+import copy
 import datetime
 import io
 import logging
 import random  # for generating a UID
+import re
 import socket
 import string
 from functools import partial
@@ -52,6 +54,17 @@ FREQUENCIES = ("YEARLY", "MONTHLY", "WEEKLY", "DAILY", "HOURLY", "MINUTELY", "SE
 
 ZERO_DELTA = datetime.timedelta(0)
 twoHours = datetime.timedelta(hours=2)
+
+# Years covered by a generated VTIMEZONE when no datetime needs more
+VTIMEZONE_START_YEAR = 2000
+VTIMEZONE_END_YEAR = 2030
+# Earliest start year; settzinfo costs one pass per year
+VTIMEZONE_MIN_START_YEAR = 1900
+# pytz has no transitions after 2037, so a later end year would drop DST
+VTIMEZONE_MAX_END_YEAR = 2037
+
+UTC_UNTIL_RE = re.compile(r"(?<![^;:])(UNTIL=)(\d{8}T\d{6})Z(?=;|$)", re.IGNORECASE)
+OFFSET_RE = re.compile(r"^([+-])(\d{2})(\d{2})(\d{2})?$")
 
 # ---------------------------- TZID registry -----------------------------------
 __tzidMap = {}
@@ -150,8 +163,14 @@ class TimezoneComponent(Component):
         def customSerialize(obj):
             if isinstance(obj, Component):
                 foldOneLine(buffer, "BEGIN:" + obj.name)
+                offsetfrom = getattr(obj, "tzoffsetfrom", None)
                 for child in obj.lines():
                     if child.name.lower() in good_lines:
+                        if child.name.lower() == "rrule" and offsetfrom is not None:
+                            value = localUntil(child.value, offsetfrom.value)
+                            if value != child.value:
+                                child = copy.copy(child)
+                                child.value = value
                         child.serialize(buffer, 75, validate=False)
                 for comp in obj.components():
                     customSerialize(comp)
@@ -1120,11 +1139,13 @@ class VCalendar2_0(VCalendarComponentBehavior):
         if not hasattr(obj, "version"):
             obj.add(ContentLine("VERSION", [], cls.versionString))
         tzidsUsed = {}
+        tzidYears = {}
 
         def findTzids(obj, table):
             if isinstance(obj, ContentLine) and (obj.behavior is None or not obj.behavior.forceUTC):
                 if getattr(obj, "tzid_param", None):
                     table[obj.tzid_param] = 1
+                    tzidYears.setdefault(toUnicode(obj.tzid_param), []).extend(datetimeYears(obj.value))
                 else:
                     if type(obj.value) is list:
                         # A list is written in the timezone of its first
@@ -1140,6 +1161,7 @@ class VCalendar2_0(VCalendarComponentBehavior):
                         tzid = TimezoneComponent.registerTzinfo(tzinfo)
                         if tzid:
                             table[tzid] = 1
+                            tzidYears.setdefault(toUnicode(tzid), []).extend(datetimeYears(obj.value))
             for child in obj.getChildren():
                 if obj.name != "VTIMEZONE":
                     findTzids(child, table)
@@ -1149,7 +1171,19 @@ class VCalendar2_0(VCalendarComponentBehavior):
         for tzid in tzidsUsed:
             tzid = toUnicode(tzid)
             if tzid != "UTC" and tzid not in oldtzids:
-                obj.add(TimezoneComponent(tzinfo=getTzid(tzid)))
+                tzinfo = getTzid(tzid)
+                start, end = vtimezoneYears(tzidYears.get(tzid, ()))
+                if tzinfo is None or (start, end) == (VTIMEZONE_START_YEAR, VTIMEZONE_END_YEAR):
+                    obj.add(TimezoneComponent(tzinfo=tzinfo))
+                else:
+                    vtimezone = TimezoneComponent()
+                    try:
+                        vtimezone.settzinfo(tzinfo, start, end)
+                    except (OverflowError, ValueError, pytz.AmbiguousTimeError, pytz.NonExistentTimeError):
+                        # some zones' early history breaks settzinfo's
+                        # assumptions; keep the default range instead
+                        vtimezone = TimezoneComponent(tzinfo=tzinfo)
+                    obj.add(vtimezone)
 
     @classmethod
     def serialize(cls, obj, buf, lineLength, validate=True, *args, **kwargs):
@@ -1883,6 +1917,76 @@ def timeToString(dateOrDateTime) -> str:
 
 def dateToString(date) -> str:
     return f"{date.year:04d}{date.month:02d}{date.day:02d}"
+
+
+def datetimeYears(value):
+    """
+    Return the years of the datetimes in a property value.
+
+    The value may be a datetime, a list of datetimes, or a list of PERIOD
+    tuples. Anything else, such as a DATE or an unparsed string, is ignored.
+    """
+    values = value if isinstance(value, list) else [value]
+    years = []
+    for item in values:
+        if isinstance(item, tuple) and item:
+            item = item[0]
+        if isinstance(item, datetime.datetime):
+            years.append(item.year)
+    return years
+
+
+def vtimezoneYears(years):
+    """
+    Return the (start, end) years a generated VTIMEZONE must cover.
+
+    The default range is kept unless a datetime needs more. The range
+    starts a year before the earliest datetime, so the observance already
+    in effect on its January 1 is defined; in the southern hemisphere that
+    is daylight time. The start year is not earlier than 1900, which bounds
+    the cost. The end year is capped at 2037, after which pytz knows no
+    transitions; the last rule then stays open-ended.
+    """
+    start, end = VTIMEZONE_START_YEAR, VTIMEZONE_END_YEAR
+    if years:
+        start = max(VTIMEZONE_MIN_START_YEAR, min(start, min(years) - 1))
+        end = max(end, min(max(years), VTIMEZONE_MAX_END_YEAR))
+    return start, end
+
+
+def localUntil(rule, offsetfrom):
+    """
+    Express a UTC UNTIL in an observance RRULE as local time.
+
+    RFC 5545 requires UNTIL in a VTIMEZONE RRULE to be UTC, while the
+    observance's DTSTART is local time in its TZOFFSETFROM offset.
+    dateutil's tzical parses the RRULE with ignoretz=True, so it compares
+    the UTC UNTIL to local onsets as if it were local time. East of UTC,
+    that drops the rule's final onset. Converting UNTIL to local time
+    first gives the comparison RFC 5545 intends.
+
+    Only offsets east of UTC are converted. West of UTC the conversion
+    moves UNTIL earlier, which would change how existing VTIMEZONEs read
+    when a client wrote UNTIL as local time marked with Z. Return rule
+    unchanged if it has no UTC UNTIL or offsetfrom cannot be parsed.
+    """
+    match = OFFSET_RE.match(str(offsetfrom).strip())
+    if not match:
+        return rule
+    sign, hours, minutes, seconds = match.groups()
+    delta = datetime.timedelta(hours=int(hours), minutes=int(minutes), seconds=int(seconds or 0))
+    if sign == "-" or not delta:
+        return rule
+
+    def toLocal(until):
+        try:
+            utc_until = datetime.datetime.strptime(until.group(2), "%Y%m%dT%H%M%S")
+            local_until = utc_until + delta
+        except (ValueError, OverflowError):
+            return until.group(0)
+        return until.group(1) + dateTimeToString(local_until)
+
+    return UTC_UNTIL_RE.sub(toLocal, rule)
 
 
 def dateTimeToString(dateTime, convertToUTC=False) -> str:
