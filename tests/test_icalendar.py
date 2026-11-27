@@ -581,6 +581,18 @@ def test_local_until(rule, offsetfrom, expected):
     assert vobject.icalendar.localUntil(rule, offsetfrom) == expected
 
 
+def _dateutil_accepts_rrule_parameters():
+    try:
+        dateutil.rrule.rrulestr("RRULE;X-TEST=yes:FREQ=YEARLY;COUNT=1", dtstart=datetime.datetime(2000, 1, 1))
+    except ValueError:
+        return False
+    return True
+
+
+@pytest.mark.skipif(
+    not _dateutil_accepts_rrule_parameters(),
+    reason="this dateutil rejects any RRULE parameter, with or without the rewrite",
+)
 def test_vtimezone_rrule_parameter_is_kept():
     """
     An observance RRULE with a parameter still parses when UNTIL is rewritten.
