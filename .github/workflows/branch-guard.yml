@@ -1,0 +1,32 @@
+name: Branch Guard
+permissions:
+  contents: read
+
+# master and branch-0.9 are never merged into each other: fixes move between
+# them only by cherry-pick (see CONTRIBUTING.md).  Fail any PR into master
+# that would bring in commits from branch-0.9.
+on:
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  no-branch-0-9-commits:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Check for commits from branch-0.9
+        run: |
+          git fetch --no-tags origin master branch-0.9
+          comm -12 \
+            <(git rev-list origin/master..HEAD | sort) \
+            <(git rev-list origin/master..origin/branch-0.9 | sort) > leaked
+          if [ -s leaked ]; then
+            echo "::error::This PR brings in $(wc -l < leaked) commit(s) from branch-0.9." \
+              "Don't merge branch-0.9 into master; cherry-pick the fix instead."
+            git log --no-walk --oneline --stdin < leaked
+            exit 1
+          fi
+          echo "OK: no commits from branch-0.9."
