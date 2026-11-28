@@ -1156,6 +1156,7 @@ class VCalendar2_0(VCalendarComponentBehavior):
                         tzid = TimezoneComponent.registerTzinfo(tzinfo)
                         if tzid:
                             table[tzid] = 1
+                            tzidYears.setdefault(toUnicode(tzid), []).extend(datetimeYears(obj.value))
                     else:
                         tzinfo = getattr(obj.value, "tzinfo", None)
                         tzid = TimezoneComponent.registerTzinfo(tzinfo)
@@ -1179,9 +1180,19 @@ class VCalendar2_0(VCalendarComponentBehavior):
                     vtimezone = TimezoneComponent()
                     try:
                         vtimezone.settzinfo(tzinfo, start, end)
-                    except (OverflowError, ValueError, pytz.AmbiguousTimeError, pytz.NonExistentTimeError):
+                    except (OverflowError, ValueError, pytz.AmbiguousTimeError, pytz.NonExistentTimeError) as exc:
                         # some zones' early history breaks settzinfo's
                         # assumptions; keep the default range instead
+                        logger.warning(
+                            "Could not generate VTIMEZONE for %s covering %d-%d (%s); "
+                            "falling back to default range %d-%d",
+                            tzid,
+                            start,
+                            end,
+                            exc,
+                            VTIMEZONE_START_YEAR,
+                            VTIMEZONE_END_YEAR,
+                        )
                         vtimezone = TimezoneComponent(tzinfo=tzinfo)
                     obj.add(vtimezone)
 
@@ -1929,10 +1940,10 @@ def datetimeYears(value):
     values = value if isinstance(value, list) else [value]
     years = []
     for item in values:
-        if isinstance(item, tuple) and item:
-            item = item[0]
-        if isinstance(item, datetime.datetime):
-            years.append(item.year)
+        parts = item if isinstance(item, tuple) else (item,)
+        for part in parts:
+            if isinstance(part, datetime.datetime):
+                years.append(part.year)
     return years
 
 
