@@ -10,7 +10,7 @@ repos:
       - id: black
         args:
           [
-            "--target-version=py39",
+            "--target-version=py310",
           ]
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
