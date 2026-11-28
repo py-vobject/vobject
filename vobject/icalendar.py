@@ -2,6 +2,8 @@
 """Definitions and behavior for iCalendar, also known as vCalendar 2.0"""
 
 import base64
+import contextlib
+import contextvars
 import copy
 import datetime
 import io
@@ -10,7 +12,8 @@ import random  # for generating a UID
 import re
 import socket
 import string
-from functools import partial
+import zoneinfo
+from functools import lru_cache, partial
 
 from dateutil import rrule, tz
 
@@ -68,6 +71,12 @@ OFFSET_RE = re.compile(r"^([+-])(\d{2})(\d{2})(\d{2})?$")
 
 # ---------------------------- TZID registry -----------------------------------
 __tzidMap = {}
+_scoped_tzid_state = contextvars.ContextVar("_scoped_tzid_state", default=None)
+
+
+@lru_cache(maxsize=4)
+def _zoneinfo_lower_map(tzpath):
+    return {name.lower(): name for name in zoneinfo.available_timezones()}
 
 
 def toUnicode(s):
@@ -90,18 +99,27 @@ def getTzid(tzid, smart=True):
     """
     Return the tzid if it exists, or None.
     """
-    _tz = __tzidMap.get(toUnicode(tzid))
-    if smart and tzid and not _tz:
+    if tzid is None:
+        return None
+    key = toUnicode(tzid)
+    state = _scoped_tzid_state.get()
+    _tz = state[1].get(key) if state is not None else None
+    if _tz is None:
+        _tz = __tzidMap.get(key)
+    if smart and key and _tz is None:
         try:
-            from pytz import UnknownTimeZoneError, timezone
-
-            try:
-                _tz = timezone(tzid)
-                registerTzid(toUnicode(tzid), _tz)
-            except UnknownTimeZoneError as e:
-                logging.error("Unknown Timezone: %r", e.args[0])
-        except ImportError as e:
-            logging.error(e)
+            _tz = zoneinfo.ZoneInfo(key)
+        except zoneinfo.ZoneInfoNotFoundError as e:
+            canonical = _zoneinfo_lower_map(zoneinfo.TZPATH).get(key.lower())
+            if canonical is not None:
+                try:
+                    _tz = zoneinfo.ZoneInfo(canonical)
+                except (zoneinfo.ZoneInfoNotFoundError, ValueError, OSError) as err:
+                    logging.error("Unknown Timezone: %r (%s)", key, err)
+            else:
+                logging.error("Unknown Timezone: %r (%s)", key, e)
+        except (ValueError, OSError) as e:
+            logging.error("Unknown Timezone: %r (%s)", key, e)
     return _tz
 
 
@@ -147,8 +165,14 @@ class TimezoneComponent(Component):
         Register tzinfo if it's not already registered, return its tzid.
         """
         tzid = cls.pickTzid(tzinfo)
-        if tzid and not getTzid(tzid, False):
-            registerTzid(tzid, tzinfo)
+        if tzid:
+            key = toUnicode(tzid)
+            state = _scoped_tzid_state.get()
+            if state is not None:
+                if key not in state[1]:
+                    state[1][key] = tzinfo
+            elif not getTzid(key, False):
+                registerTzid(key, tzinfo)
         return tzid
 
     def gettzinfo(self):
@@ -258,8 +282,8 @@ class TimezoneComponent(Component):
                     # an offset transition was found
                     try:
                         old_offset = tzinfo.utcoffset(transition - twoHours)
-                        name = tzinfo.tzname(transition)
-                        offset = tzinfo.utcoffset(transition)
+                        name = tzinfo.tzname(transition.replace(fold=1))
+                        offset = tzinfo.utcoffset(transition.replace(fold=1))
                     except (pytz.AmbiguousTimeError, pytz.NonExistentTimeError):
                         # guaranteed that tzinfo is a pytz timezone
                         is_dst = transitionTo == "daylight"
@@ -269,6 +293,7 @@ class TimezoneComponent(Component):
                     rule = {
                         "end": None,  # None, or an integer year
                         "start": transition,  # the datetime of transition
+                        "last": transition,
                         "month": transition.month,
                         "weekday": transition.weekday(),
                         "hour": transition.hour,
@@ -293,6 +318,7 @@ class TimezoneComponent(Component):
                                 oldrule["plus"] = None
                             if not minusMatch:
                                 oldrule["minus"] = None
+                            oldrule["last"] = transition
                         else:
                             # the new rule did not match the old
                             oldrule["end"] = year - 1
@@ -338,14 +364,7 @@ class TimezoneComponent(Component):
                         # all year offset, with no rule
                         endDate = datetime.datetime(rule["end"], 1, 1)
                     else:
-                        weekday = rrule.weekday(rule["weekday"], num)
-                        du_rule = rrule.rrule(
-                            rrule.YEARLY,
-                            bymonth=rule["month"],
-                            byweekday=weekday,
-                            dtstart=datetime.datetime(rule["end"], 1, 1, rule["hour"]),
-                        )
-                        endDate = du_rule[0]
+                        endDate = rule["last"]
                     endDate = endDate.replace(tzinfo=utc) - rule["offsetfrom"]
                     endString = ";UNTIL=" + dateTimeToString(endDate)
                 else:
@@ -1125,6 +1144,29 @@ class VCalendar2_0(VCalendarComponentBehavior):
         "VAVAILABILITY": (0, None, None),
     }
 
+    @staticmethod
+    @contextlib.contextmanager
+    def transformContext(obj):
+        current = _scoped_tzid_state.get()
+        if current is not None and current[0] is obj:
+            yield
+            return
+        tzid_map = {}
+        for vtz in obj.contents.get("vtimezone", ()):
+            if vtz.isNative and hasattr(vtz, "tzid"):
+                tzinfo = vtz.tzinfo
+                if tzinfo is not None:
+                    tzid = TimezoneComponent.pickTzid(tzinfo)
+                    if tzid:
+                        key = toUnicode(tzid)
+                        if key not in tzid_map:
+                            tzid_map[key] = tzinfo
+        token = _scoped_tzid_state.set((obj, tzid_map))
+        try:
+            yield
+        finally:
+            _scoped_tzid_state.reset(token)
+
     @classmethod
     def generateImplicitParameters(cls, obj):
         """
@@ -1133,6 +1175,11 @@ class VCalendar2_0(VCalendarComponentBehavior):
         VTIMEZONEs will need to exist whenever TZID parameters exist or when
         datetimes with tzinfo exist.
         """
+        with cls.transformContext(obj):
+            cls._generateImplicitParameters(obj)
+
+    @classmethod
+    def _generateImplicitParameters(cls, obj):
         for comp in obj.components():
             if comp.behavior is not None:
                 comp.behavior.generateImplicitParameters(comp)
@@ -1209,6 +1256,11 @@ class VCalendar2_0(VCalendarComponentBehavior):
         Default is to call base.defaultSerialize.
 
         """
+        with cls.transformContext(obj):
+            return cls._serialize(obj, buf, lineLength, validate=validate, *args, **kwargs)
+
+    @classmethod
+    def _serialize(cls, obj, buf, lineLength, validate=True, *args, **kwargs):
 
         cls.generateImplicitParameters(obj)
         if validate:
@@ -2362,16 +2414,16 @@ def getTransition(transitionTo, year, tzinfo):
         hours = range(24)
         if month is None:
             for _month in months:
-                yield datetime.datetime(year, _month, 1)
+                yield datetime.datetime(year, _month, 1, fold=1)
         elif day is None:
             for _day in days:
                 try:
-                    yield datetime.datetime(year, month, _day)
+                    yield datetime.datetime(year, month, _day, fold=1)
                 except ValueError:
                     pass
         else:
             for hour in hours:
-                yield datetime.datetime(year, month, day, hour)
+                yield datetime.datetime(year, month, day, hour, fold=1)
 
     assert transitionTo in ("daylight", "standard")
     test = includes_dst_offset if transitionTo == "daylight" else omits_dst_offset
@@ -2405,10 +2457,16 @@ def tzinfo_eq(tzinfo1, tzinfo2, startYear=2000, endYear=2020):
     elif tzinfo1 is None or tzinfo2 is None:
         return False
 
-    def dt_test(dt):
+    def offset_at(tzinfo, dt, is_dst=False):
+        try:
+            return tzinfo.utcoffset(dt.replace(fold=1))
+        except (pytz.AmbiguousTimeError, pytz.NonExistentTimeError):
+            return tzinfo.utcoffset(dt, is_dst=is_dst)
+
+    def dt_test(dt, is_dst=False):
         if dt is None:
             return True
-        return tzinfo1.utcoffset(dt) == tzinfo2.utcoffset(dt)
+        return offset_at(tzinfo1, dt, is_dst) == offset_at(tzinfo2, dt, is_dst)
 
     if not dt_test(datetime.datetime(startYear, 1, 1)):
         return False
@@ -2416,7 +2474,7 @@ def tzinfo_eq(tzinfo1, tzinfo2, startYear=2000, endYear=2020):
         for transitionTo in "daylight", "standard":
             t1 = getTransition(transitionTo, year, tzinfo1)
             t2 = getTransition(transitionTo, year, tzinfo2)
-            if t1 != t2 or not dt_test(t1):
+            if t1 != t2 or not dt_test(t1, transitionTo == "daylight"):
                 return False
     return True
 

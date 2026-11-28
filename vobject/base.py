@@ -1,6 +1,7 @@
 """vobject module for reading vCard and vCalendar files."""
 
 import codecs
+import contextlib
 import copy
 import io
 import logging
@@ -664,15 +665,13 @@ class Component(VBase):
             self.setBehavior(v)
 
     def transformChildrenToNative(self):
-        """
-        Recursively replace children with their native representation.
-
-        Sort to get dependency order right, like vtimezone before vevent.
-        """
-        for childArray in (self.contents[k] for k in self.sortChildKeys()):
-            for child in childArray:
-                child = child.transformToNative()
-                child.transformChildrenToNative()
+        """Recursively replace children with their native representation, sorted for dependency order."""
+        ctx = getattr(self.behavior, "transformContext", None)
+        with ctx(self) if ctx is not None else contextlib.nullcontext():
+            for childArray in (self.contents[k] for k in self.sortChildKeys()):
+                for child in childArray:
+                    child = child.transformToNative()
+                    child.transformChildrenToNative()
 
     def transformChildrenFromNative(self, clearBehavior=True):
         """
