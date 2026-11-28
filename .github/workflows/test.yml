@@ -2,13 +2,17 @@ name: Code Test
 permissions:
   contents: read
 
-on: [push]
+on:
+  pull_request:
+  push:
 jobs:
   run-tests:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        python-version: [ '3.9', '3.10', '3.11', '3.12', '3.13', '3.14' ]
+        # Keep in sync with env_list in [tool.tox] in pyproject.toml.
+        python-version: [ '3.9', '3.10', '3.11', '3.12', '3.13', '3.14', '3.15' ]
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -17,10 +21,10 @@ jobs:
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install Requirements
+      - name: Install tox
         run: |
-          python -m pip install --upgrade flit pip wheel pytest
-          pip install -e .['dev']
+          python -m pip install --upgrade pip
+          python -m pip install tox tox-uv
       - name: Run Tests
         run: |
-          pytest
+          tox -e ${{ matrix.python-version }}
