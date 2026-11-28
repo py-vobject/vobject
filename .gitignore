@@ -11,3 +11,6 @@ venv/**/*
 .coverage
 venv*
 programmers-guide/build
+.tox/
+.venv/
+uv.lock
