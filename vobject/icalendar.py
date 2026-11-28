@@ -876,6 +876,13 @@ class MultiDateBehavior(behavior.Behavior):
     """
     Parent Behavior for ContentLines containing one or more DATE, DATE-TIME, or
     PERIOD.
+
+    The native value is a Python list whose items are all the same
+    type: datetime.date (DATE), datetime.datetime (DATE-TIME), or a
+    tuple of (datetime.datetime, datetime.timedelta) or (datetime.datetime,
+    datetime.datetime) representing a PERIOD.  RFC 5545 only allows
+    periods in RDATE.
+
     """
 
     hasNative = True
@@ -904,36 +911,142 @@ class MultiDateBehavior(behavior.Behavior):
         return obj
 
     @staticmethod
-    def transformFromNative(obj):
+    def _valueType(val):
+        """
+        Return the iCalendar value type of one native list item, or None.
+        """
+        if isinstance(val, tuple):
+            if (
+                len(val) == 2
+                and isinstance(val[0], datetime.datetime)
+                and isinstance(val[1], (datetime.datetime, datetime.timedelta))
+            ):
+                return "PERIOD"
+            return None
+        # Check datetime first: datetime.datetime is a subclass of datetime.date.
+        if isinstance(val, datetime.datetime):
+            return "DATE-TIME"
+        if isinstance(val, datetime.date):
+            return "DATE"
+        return None
+
+    @classmethod
+    def _analyze(cls, values):
+        """
+        Check a native value, and work out how to serialize it.
+
+        Return (valueType, tzinfo, problem): the value type shared by all
+        items; the timezone to write date-times in (None if there are no
+        timezone-aware date-times); and why the value can't be serialized,
+        or None if it can.
+        """
+        if not isinstance(values, list):
+            return None, None, "value must be a list"
+        types = {cls._valueType(val) for val in values}
+        if None in types:
+            return None, None, "values must be dates, datetimes, or (datetime, timedelta or datetime) periods"
+        if len(types) > 1:
+            return None, None, f"values must all be the same type, not a mix of {', '.join(sorted(types))}"
+        valueType = types.pop() if types else None
+
+        if valueType == "DATE-TIME":
+            datetimes = list(values)
+        elif valueType == "PERIOD":
+            datetimes = [d for period in values for d in period if isinstance(d, datetime.datetime)]
+        else:
+            return valueType, None, None
+
+        # One line has at most one TZID, which covers every value without a
+        # "Z".  Floating date-times can share a line with UTC ones, but not
+        # with date-times that need a TZID (RFC 5545 3.2.19).
+        zones = list({id(d.tzinfo): d.tzinfo for d in datetimes if d.tzinfo is not None}.values())
+        floating = any(d.tzinfo is None for d in datetimes)
+        if floating and any(not tzinfo_eq(zone, utc) for zone in zones):
+            return valueType, None, "can't mix floating date-times with date-times in a timezone other than UTC"
+        # Write all timezone-aware date-times in the first one's timezone.
+        return valueType, (zones[0] if zones else None), None
+
+    @classmethod
+    def lineValidate(cls, line, raiseException, complainUnrecognized):
+        """
+        Check the RFC 5545 rules for RDATE and EXDATE values.
+        """
+        problem = cls._validationProblem(line)
+        if problem is None:
+            return True
+        if raiseException:
+            raise ValidateError(f"{line.name}: {problem}", getattr(line, "lineNumber", None))
+        return False
+
+    @classmethod
+    def _validationProblem(cls, line):
+        """
+        Return why line breaks the RFC 5545 rules, or None if it doesn't.
+        """
+        if line.isNative:
+            if isinstance(line.value, list) and not line.value:
+                return "must have at least one value"
+            valueType, _, problem = cls._analyze(line.value)
+        else:
+            # Validation runs before parsed values are made native, so check
+            # the text form too.
+            if isinstance(line.value, str) and not line.value.strip():
+                return "must have at least one value"
+            valueType, problem = getattr(line, "value_param", "DATE-TIME").upper(), None
+
+        if problem is None and valueType == "PERIOD" and line.name.upper() == "EXDATE":
+            problem = "values can't be periods (RFC 5545 3.8.5.1)"
+        return problem
+
+    @classmethod
+    def transformFromNative(cls, obj):
         """
         Replace the date, datetime or period tuples in obj.value with
         appropriate strings.
+
+        The VALUE parameter is set from the values' type, and TZID from the
+        first timezone-aware date-time.  Other timezone-aware date-times are
+        converted to that timezone, so every value keeps its instant.
         """
-        if obj.value and type(obj.value[0]) is datetime.date:
-            obj.isNative = False
+        if not obj.isNative:
+            return obj
+        valueType, tzinfo, problem = cls._analyze(obj.value)
+        if problem is not None:
+            raise NativeError(f"{obj.name}: {problem}")
+
+        values = obj.value
+        obj.isNative = False
+        if not values:
+            obj.value = ""
+            return obj
+
+        if valueType == "DATE":
             obj.value_param = "DATE"
-            obj.value = ",".join([dateToString(val) for val in obj.value])
+            obj.value = ",".join(dateToString(val) for val in values)
             return obj
+
+        def inZone(dt):
+            if tzinfo is None or dt.tzinfo is None or dt.tzinfo is tzinfo:
+                return dt
+            return dt.astimezone(tzinfo)
+
+        if tzinfo is not None:
+            tzid = TimezoneComponent.registerTzinfo(tzinfo)
+            if tzid is not None:
+                obj.tzid_param = tzid
+
+        if valueType == "PERIOD":
+            obj.value_param = "PERIOD"
+            obj.value = ",".join(
+                periodToString((inZone(start), inZone(end) if isinstance(end, datetime.datetime) else end))
+                for start, end in values
+            )
         else:
-            if obj.isNative:
-                obj.isNative = False
-                transformed = []
-                tzid = None
-                for val in obj.value:
-                    if getattr(obj, "value_param", "DATE-TIME").upper() == "PERIOD":
-                        if type(val[0]) is datetime.datetime and type(val[1]) is datetime.timedelta:
-                            transformed.append(periodToString(val))
-                            continue
-                        if type(val[0]) is datetime.datetime and type(val[1]) is datetime.datetime:
-                            transformed.append(dateTimeToString(val[0]) + "/" + dateTimeToString(val[1]))
-                            continue
-                    if tzid is None and type(val) is datetime.datetime:
-                        tzid = TimezoneComponent.registerTzinfo(val.tzinfo)
-                        if tzid is not None:
-                            obj.tzid_param = tzid
-                    transformed.append(dateTimeToString(val))
-                obj.value = ",".join(transformed)
-            return obj
+            # DATE-TIME is the default, so only keep an explicit VALUE=DATE-TIME.
+            if getattr(obj, "value_param", "DATE-TIME").upper() != "DATE-TIME":
+                del obj.value_param
+            obj.value = ",".join(dateTimeToString(inZone(val)) for val in values)
+        return obj
 
 
 class MultiTextBehavior(behavior.Behavior):
@@ -1014,11 +1127,14 @@ class VCalendar2_0(VCalendarComponentBehavior):
                     table[obj.tzid_param] = 1
                 else:
                     if type(obj.value) is list:
-                        for _ in obj.value:
-                            tzinfo = getattr(obj.value, "tzinfo", None)
-                            tzid = TimezoneComponent.registerTzinfo(tzinfo)
-                            if tzid:
-                                table[tzid] = 1
+                        # A list is written in the timezone of its first
+                        # timezone-aware date-time (periods included), as in
+                        # MultiDateBehavior.transformFromNative.
+                        items = (part for val in obj.value for part in (val if isinstance(val, tuple) else (val,)))
+                        tzinfo = next((i.tzinfo for i in items if getattr(i, "tzinfo", None) is not None), None)
+                        tzid = TimezoneComponent.registerTzinfo(tzinfo)
+                        if tzid:
+                            table[tzid] = 1
                     else:
                         tzinfo = getattr(obj.value, "tzinfo", None)
                         tzid = TimezoneComponent.registerTzinfo(tzinfo)
