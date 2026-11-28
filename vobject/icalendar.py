@@ -552,7 +552,6 @@ class RecurringComponent(Component):
                     # add the rrule or exrule to the rruleset
                     addfunc(rule)
 
-                added = False
                 if name in ["rrule", "rdate"] and addRDate:
                     # rlist = rruleset._rrule if name == 'rrule' else rruleset._rdate
                     try:
@@ -568,21 +567,14 @@ class RecurringComponent(Component):
                         if name == "rrule":
                             if rruleset._rrule[-1][0] != adddtstart:
                                 rruleset.rdate(adddtstart)
-                                added = True
                                 if rruleset._rrule[-1]._count is not None:
                                     rruleset._rrule[-1]._count -= 1
-                            else:
-                                added = False
                         elif name == "rdate":
                             if rruleset._rdate[0] != adddtstart:
                                 rruleset.rdate(adddtstart)
-                                added = True
-                            else:
-                                added = False
                     except IndexError:
                         # it's conceivable that an rrule has 0 datetimes
-                        added = False
-                print("unused variables", added)  # TODO: remove if not required
+                        pass
         return rruleset
 
     def setrruleset(self, rruleset):
@@ -1214,10 +1206,9 @@ class VCalendar2_0(VCalendarComponentBehavior):
         if validate:
             cls.validate(obj, raiseException=True)
         if obj.isNative:
-            transformed = obj.transformFromNative()
+            obj.transformFromNative()
             undoTransform = True
         else:
-            transformed = obj
             undoTransform = False
 
         outbuf = buf or io.StringIO()
@@ -1263,7 +1254,6 @@ class VCalendar2_0(VCalendarComponentBehavior):
         out = buf or outbuf.getvalue()
         if undoTransform:
             obj.transformToNative()
-        print("unused variables", transformed)  # TODO: remove if not required
         return out
 
 
