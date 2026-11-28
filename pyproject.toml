@@ -98,7 +98,7 @@ multi_line_output = 3
 requires = ["tox>=4.19"]
 # Keep in sync with the matrix in .github/workflows/test.yml, and with
 # default_language_version in .pre-commit-config.yaml.
-env_list = ["3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
+env_list = ["3.10", "3.11", "3.12", "3.13", "3.14", "3.15", "min"]
 
 [tool.tox.env_run_base]
 description = "Run test under {base_python}"
@@ -106,3 +106,20 @@ deps = ["pytest"]
 commands = [["pytest"]]
 # Always use uv interpreters, never the host version.
 uv_python_preference = "only-managed"
+
+# The oldest supported Python with the lowest dependency versions allowed by
+# [project] dependencies, so those minimums stay true.  Keep base_python and
+# the pins in sync with requires-python and dependencies.
+[tool.tox.env.min]
+description = "Run tests with the oldest supported Python and minimum dependencies"
+base_python = ["3.10"]
+deps = ["pytest", "python-dateutil==2.7.0", "pytz==2019.1"]
+commands = [
+    # Fail if installing vobject upgraded a pinned dependency.
+    [
+        "python",
+        "-c",
+        "import dateutil, pytz; v = (dateutil.__version__, pytz.__version__); assert v == ('2.7.0', '2019.1'), v",
+    ],
+    ["pytest"],
+]
