@@ -135,8 +135,10 @@ class TimezoneComponent(Component):
                       'tzoffsetto', 'tzid')
         # serialize encodes as utf-8, cStringIO will leave utf-8 alone
         buffer = six.StringIO()
-        # allow empty VTIMEZONEs
-        if len(self.contents) == 0:
+        # allow empty VTIMEZONEs, and ones without any STANDARD or DAYLIGHT
+        # observance: RFC 5545 requires one, but some clients write only a
+        # TZID.  Properties using that TZID are then resolved by name.
+        if 'standard' not in self.contents and 'daylight' not in self.contents:
             return None
 
         def customSerialize(obj):
