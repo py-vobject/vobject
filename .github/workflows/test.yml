@@ -31,3 +31,16 @@ jobs:
       - name: Run Tests ${{ matrix.python-version }}
         run: |
           tox -e ${{ matrix.python-version }}
+
+  # Single required status check for the whole matrix, so the ruleset needn't
+  # change when Python versions are added or dropped.  `always()` makes this
+  # job run (and fail) when matrix jobs fail; a skipped check counts as passed.
+  tests-passed:
+    needs: run-tests
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check matrix result
+        run: |
+          echo "run-tests result: ${{ needs.run-tests.result }}"
+          test "${{ needs.run-tests.result }}" = success
