@@ -1,6 +1,11 @@
 Python vObject Release Notes
 ============================
 
+vobject 1.0.0 (unreleased)
+--
+* Supports CPython 3.10 or later.
+  * Drops support for Python 2.7 and Python 3.9 and earlier
+
 vobject 0.9.9 released
 --
 16 December 2024

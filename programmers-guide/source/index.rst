@@ -14,7 +14,7 @@ Introduction
 and *iCalendar* (aka *vCalendar*) objects, used for sharing and storage
 of personal contacts and calendar events.
 
-It supports Python 3.8 or later.  Releases in the 0.9.x series support
+It supports Python 3.10 or later.  Releases in the 0.9.x series support
 Python 2.7, and earlier releases of Python 3.
 
 This document gives an overview of the *vCard* and *iCalendar* standards,

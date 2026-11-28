@@ -19,7 +19,7 @@ There are two series of releases:
 
 * Versions 0.9.x continue to support Python 2.7. This branch is maintained only for backward compatibility, and does not
   get new features.
-* Versions 1.x support only Python 3.8 or later, and is the focus of ongoing feature development.
+* Versions 1.x support only Python 3.10 or later, and is the focus of ongoing feature development.
 
 Please report bugs and issues directly on [GitHub](https://github.com/py-vobject/vobject/issues).
 
