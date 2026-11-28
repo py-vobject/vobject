@@ -153,3 +153,18 @@ def test_contentline_parameter_delattr():
 
     del cl.p2_paramlist
     assert len(cl.params) == 0
+
+
+def test_fold_one_line_counts_bytes():
+    """
+    A line under 75 characters but over 75 octets must still be folded
+    """
+    line = "SUMMARY:" + "é" * 40  # 48 characters, 88 octets
+    buf = io.StringIO()
+    vobject.base.foldOneLine(buf, line)
+    folded = buf.getvalue()
+
+    physical = folded.split("\r\n")[:-1]
+    assert len(physical) == 2
+    assert all(len(part.encode("utf-8")) <= 75 for part in physical)
+    assert folded.replace("\r\n ", "") == line + "\r\n"

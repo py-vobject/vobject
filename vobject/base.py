@@ -1012,7 +1012,7 @@ def foldOneLine(outbuf, input_, lineLength=75):
             # fall back on py2 syntax
             outbuf.write(text)
 
-    if len(input_) < lineLength:
+    if len(to_basestring(input_)) < lineLength:
         # Optimize for unfolded line case
         write_to_outbuf(text=input_)
 
