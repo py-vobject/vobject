@@ -69,6 +69,14 @@ yourself).
    tox -p
    ```
 
+Submitting Changes
+------------------
+Open PRs against _master_.  If a fix is also needed in 0.9.x, say so
+in the PR, and a maintainer will discuss it and backport if agreed.
+_branch-0.9_ and _master_ are no longer merged; changes only move
+between them with a cherry-pick.
+
+
 Release Process
 ---------------
 0.9.x Branch
