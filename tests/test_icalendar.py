@@ -410,6 +410,59 @@ def test_pytz_timezone_serializing():
         tz.serialize()
 
 
+# A VTIMEZONE holding only a TZID, as written by OneCalendar
+# (PRODID:-//Codespark//OneCalendar//EN).  RFC 5545 requires a STANDARD or
+# DAYLIGHT observance, but such calendars should still be readable.
+VTIMEZONE_WITHOUT_OBSERVANCES = (
+    "BEGIN:VCALENDAR\r\n"
+    "VERSION:2.0\r\n"
+    "PRODID:-//Codespark//OneCalendar//EN\r\n"
+    "BEGIN:VTIMEZONE\r\n"
+    "TZID:Europe/Amsterdam\r\n"
+    "END:VTIMEZONE\r\n"
+    "BEGIN:VEVENT\r\n"
+    "SUMMARY:Busy\r\n"
+    "CLASS:CONFIDENTIAL\r\n"
+    "DTSTART;TZID=Europe/Amsterdam:20261207T130000\r\n"
+    "DTEND;TZID=Europe/Amsterdam:20261207T140000\r\n"
+    "UID:c068bdf8-a88f-47f0-89bd-afaa3ccf3af1\r\n"
+    "END:VEVENT\r\n"
+    "END:VCALENDAR\r\n"
+)
+
+
+def test_vtimezone_without_observances():
+    """A VTIMEZONE with only a TZID doesn't make the calendar unparseable."""
+    cal = vobject.readOne(VTIMEZONE_WITHOUT_OBSERVANCES)
+    assert cal.vtimezone.tzinfo is None
+    assert cal.vevent.summary.value == "Busy"
+
+
+def test_vtimezone_without_observances_tzid_lookup():
+    """The TZID of a VTIMEZONE without observances is resolved by name."""
+    cal = vobject.readOne(VTIMEZONE_WITHOUT_OBSERVANCES)
+    utc = dateutil.tz.tzutc()
+    assert cal.vevent.dtstart.value.astimezone(utc) == datetime.datetime(2026, 12, 7, 12, 0, tzinfo=utc)
+    assert cal.vevent.dtend.value.astimezone(utc) == datetime.datetime(2026, 12, 7, 13, 0, tzinfo=utc)
+
+
+def test_vtimezone_without_observances_serialize():
+    """
+    Serializing still fails validation, since RFC 5545 requires an
+    observance; validate=False writes the VTIMEZONE back unchanged.
+    """
+    cal = vobject.readOne(VTIMEZONE_WITHOUT_OBSERVANCES)
+    with pytest.raises(vobject.base.ValidateError, match="STANDARD or a DAYLIGHT"):
+        cal.serialize()
+    assert "BEGIN:VTIMEZONE\r\nTZID:Europe/Amsterdam\r\nEND:VTIMEZONE\r\n" in cal.serialize(validate=False)
+
+
+def test_vtimezone_without_observances_validate():
+    """Parsing with validate=True rejects a VTIMEZONE without observances."""
+    with pytest.raises(vobject.base.ValidateError, match="STANDARD or a DAYLIGHT"):
+        vobject.readOne(VTIMEZONE_WITHOUT_OBSERVANCES, validate=True)
+
+
 def test_free_busy():
     """
     Test freebusy components
