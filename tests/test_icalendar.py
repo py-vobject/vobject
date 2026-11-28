@@ -735,6 +735,190 @@ def test_recurrence_rdate_bad_explicit_period_value():
         vobject.readOne(raw)
 
 
+# --- RDATE / EXDATE serialization and validation (MultiDateBehavior) -------
+
+MULTIDATE_HEAD = (
+    "BEGIN:VCALENDAR\r\n"
+    "VERSION:2.0\r\n"
+    "PRODID:test\r\n"
+    "BEGIN:VEVENT\r\n"
+    "UID:test\r\n"
+    "DTSTART:20000101T090000Z\r\n"
+    "DTSTAMP:20000101T000000Z\r\n"
+)
+MULTIDATE_TAIL = "END:VEVENT\r\nEND:VCALENDAR\r\n"
+NEW_YORK = zoneinfo.ZoneInfo("America/New_York")
+UTC = vobject.icalendar.utc
+HOUR = datetime.timedelta(hours=1)
+
+
+def multidate_calendar(name, value, value_param=None):
+    """Return a calendar with one event that has a name property set to value."""
+    cal = vobject.iCalendar()
+    event = cal.add("vevent")
+    event.add("uid").value = "test"
+    event.add("dtstart").value = datetime.datetime(2000, 1, 1, 9, tzinfo=UTC)
+    line = event.add(name)
+    line.value = value
+    if value_param is not None:
+        line.value_param = value_param
+    return cal
+
+
+def property_lines(serialized, name):
+    """Return the unfolded lines of serialized for property name."""
+    return [line for line in serialized.replace("\r\n ", "").splitlines() if re.match(f"{name}[;:]", line)]
+
+
+def test_serialize_exdate_implicit_datetime_value():
+    cal = vobject.readOne(MULTIDATE_HEAD + "EXDATE:20000104T090000Z,20000105T090000Z\r\n" + MULTIDATE_TAIL)
+    assert property_lines(cal.serialize(), "EXDATE") == ["EXDATE:20000104T090000Z,20000105T090000Z"]
+
+
+def test_serialize_exdate_explicit_datetime_value_kept():
+    cal = vobject.readOne(MULTIDATE_HEAD + "EXDATE;VALUE=DATE-TIME:20000104T090000Z\r\n" + MULTIDATE_TAIL)
+    assert property_lines(cal.serialize(), "EXDATE") == ["EXDATE;VALUE=DATE-TIME:20000104T090000Z"]
+
+
+def test_serialize_floating_and_utc_datetimes():
+    """Floating and UTC date-times can share a line: neither needs a TZID."""
+    raw = MULTIDATE_HEAD + "EXDATE:20000104T090000Z,20000105T090000\r\n" + MULTIDATE_TAIL
+    cal = vobject.readOne(raw)
+    assert property_lines(cal.serialize(), "EXDATE") == ["EXDATE:20000104T090000Z,20000105T090000"]
+
+
+@pytest.mark.parametrize(
+    "period, expected",
+    [
+        ((datetime.datetime(2000, 1, 4, 9, tzinfo=UTC), HOUR), "RDATE;VALUE=PERIOD:20000104T090000Z/PT1H"),
+        (
+            (datetime.datetime(2000, 1, 4, 9, tzinfo=UTC), datetime.datetime(2000, 1, 4, 10, tzinfo=UTC)),
+            "RDATE;VALUE=PERIOD:20000104T090000Z/20000104T100000Z",
+        ),
+    ],
+)
+def test_serialize_rdate_periods_without_value_param(period, expected):
+    cal = multidate_calendar("rdate", [period])
+    assert property_lines(cal.serialize(), "RDATE") == [expected]
+
+
+def test_serialize_parsed_exdate_with_value_replaced_by_dates():
+    cal = vobject.readOne(MULTIDATE_HEAD + "EXDATE:20000104T090000Z\r\n" + MULTIDATE_TAIL)
+    cal.vevent.exdate.value = [datetime.date(2000, 1, 4)]
+    assert property_lines(cal.serialize(), "EXDATE") == ["EXDATE;VALUE=DATE:20000104"]
+
+
+def test_serialize_stale_value_param_replaced():
+    """VALUE follows the values, not a leftover parameter."""
+    cal = multidate_calendar("exdate", [datetime.datetime(2000, 1, 4, 9, tzinfo=UTC)], value_param="DATE")
+    assert property_lines(cal.serialize(), "EXDATE") == ["EXDATE:20000104T090000Z"]
+
+
+def test_serialize_rdate_period_keeps_timezone():
+    start = datetime.datetime(2000, 1, 4, 9, tzinfo=NEW_YORK)
+    cal = multidate_calendar("rdate", [(start, start + HOUR)], value_param="PERIOD")
+    assert property_lines(cal.serialize(), "RDATE") == [
+        "RDATE;TZID=America/New_York;VALUE=PERIOD:20000104T090000/20000104T100000"
+    ]
+
+
+def test_serialize_mixed_timezones_use_first_timezone():
+    """Values are converted to the first value's timezone, keeping their instants."""
+    values = [datetime.datetime(2000, 1, 4, 9, tzinfo=NEW_YORK), datetime.datetime(2000, 1, 5, 9, tzinfo=UTC)]
+    cal = multidate_calendar("exdate", values)
+    assert property_lines(cal.serialize(), "EXDATE") == ["EXDATE;TZID=America/New_York:20000104T090000,20000105T040000"]
+
+
+def test_serialize_mixed_timezones_first_utc():
+    values = [datetime.datetime(2000, 1, 4, 9, tzinfo=UTC), datetime.datetime(2000, 1, 5, 9, tzinfo=NEW_YORK)]
+    cal = multidate_calendar("exdate", values)
+    assert property_lines(cal.serialize(), "EXDATE") == ["EXDATE:20000104T090000Z,20000105T140000Z"]
+
+
+@pytest.mark.parametrize("validate", [True, False])
+@pytest.mark.parametrize(
+    "value, message",
+    [
+        ([datetime.date(2000, 1, 4), datetime.datetime(2000, 1, 5, 9, tzinfo=UTC)], "same type"),
+        (
+            [datetime.datetime(2000, 1, 4, 9, tzinfo=UTC), (datetime.datetime(2000, 1, 5, 9, tzinfo=UTC), HOUR)],
+            "same type",
+        ),
+        ([datetime.datetime(2000, 1, 4, 9), datetime.datetime(2000, 1, 5, 9, tzinfo=NEW_YORK)], "floating"),
+        ([(datetime.datetime(2000, 1, 4, 9), datetime.datetime(2000, 1, 4, 10, tzinfo=NEW_YORK))], "floating"),
+        (["20000104T090000Z"], "must be dates"),
+    ],
+)
+def test_serialize_unwritable_values_always_raise(value, message, validate):
+    """These can't be written correctly, so they fail with or without validation."""
+    cal = multidate_calendar("rdate", value)
+    expected = vobject.base.ValidateError if validate else vobject.base.NativeError
+    with pytest.raises(expected, match=message):
+        cal.serialize(validate=validate)
+
+
+@pytest.mark.parametrize("name", ["rdate", "exdate"])
+def test_serialize_empty_value(name):
+    cal = multidate_calendar(name, [])
+    with pytest.raises(vobject.base.ValidateError, match="at least one value"):
+        cal.serialize()
+    assert property_lines(cal.serialize(validate=False), name.upper()) == [f"{name.upper()}:"]
+
+
+def test_serialize_exdate_period():
+    cal = multidate_calendar("exdate", [(datetime.datetime(2000, 1, 4, 9, tzinfo=UTC), HOUR)])
+    with pytest.raises(vobject.base.ValidateError, match="can't be periods"):
+        cal.serialize()
+    assert property_lines(cal.serialize(validate=False), "EXDATE") == ["EXDATE;VALUE=PERIOD:20000104T090000Z/PT1H"]
+
+
+@pytest.mark.parametrize(
+    "line, message",
+    [
+        ("EXDATE:", "at least one value"),
+        ("RDATE:", "at least one value"),
+        ("EXDATE;VALUE=PERIOD:20000104T090000Z/PT1H", "can't be periods"),
+        ("EXDATE;VALUE=period:20000104T090000Z/PT1H", "can't be periods"),
+    ],
+)
+def test_parse_multidate_validation(line, message):
+    """Parsing is lenient by default, and strict with validate=True."""
+    raw = MULTIDATE_HEAD + line + "\r\n" + MULTIDATE_TAIL
+    vobject.readOne(raw)
+    with pytest.raises(vobject.base.ValidateError, match=message):
+        vobject.readOne(raw, validate=True)
+
+
+def test_parse_valid_multidates_with_validation():
+    lines = "RDATE;VALUE=PERIOD:20000104T090000Z/PT1H\r\nEXDATE;VALUE=DATE:20000105\r\n"
+    cal = vobject.readOne(MULTIDATE_HEAD + lines + MULTIDATE_TAIL, validate=True)
+    assert cal.vevent.rdate.value == [(datetime.datetime(2000, 1, 4, 9, tzinfo=UTC), HOUR)]
+
+
+@pytest.mark.parametrize(
+    "name, value, expected_tzids",
+    [
+        ("exdate", [datetime.datetime(2000, 1, 4, 9, tzinfo=NEW_YORK)], ["America/New_York"]),
+        ("rdate", [(datetime.datetime(2000, 1, 4, 9, tzinfo=NEW_YORK), HOUR)], ["America/New_York"]),
+        (
+            "exdate",
+            [
+                datetime.datetime(2000, 1, 4, 9, tzinfo=NEW_YORK),
+                datetime.datetime(2000, 1, 5, 9, tzinfo=zoneinfo.ZoneInfo("Europe/Paris")),
+            ],
+            ["America/New_York"],
+        ),
+        ("exdate", [datetime.datetime(2000, 1, 4, 9, tzinfo=UTC)], []),
+    ],
+)
+def test_serialize_multidate_adds_vtimezone(name, value, expected_tzids):
+    """A VTIMEZONE is added for the timezone each RDATE or EXDATE is written in, and no others."""
+    serialized = multidate_calendar(name, value).serialize()
+    assert property_lines(serialized, "TZID") == [f"TZID:{tzid}" for tzid in expected_tzids]
+    for tzid in expected_tzids:
+        assert f"{name.upper()};TZID={tzid}" in serialized
+
+
 def test_issue50():
     """
     Ensure leading spaces in a DATE-TIME value are ignored when not in

@@ -5,6 +5,20 @@ vobject 1.0.0 (unreleased)
 --
 * Supports CPython 3.10 or later.
   * Drops support for Python 2.7 and Python 3.9 and earlier
+* Fix RDATE and EXDATE serialization.
+  * `VALUE` is set from the native values' type, so periods built in code no
+    longer need `VALUE=PERIOD`, and stale `VALUE` parameters are replaced.
+  * Periods keep their timezone, and date-times in different timezones
+    are converted to the first value's timezone instead of being written
+    with the wrong time.
+  * A VTIMEZONE is now added for the timezone of RDATE and EXDATE values
+    set in code.
+  * Mixed value types, or floating date-times mixed with ones in a
+    timezone other than UTC, raise `NativeError` (or `ValidateError` when
+    validating).
+  * `serialize()`, which validates by default, now rejects empty RDATE or
+    EXDATE properties and periods in EXDATE; use `validate=False` to write
+    them anyway.  `readOne(..., validate=True)` rejects them when parsing.
 
 vobject 0.9.9 released
 --
