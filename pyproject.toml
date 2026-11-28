@@ -7,11 +7,10 @@ keywords = ["vobject", "icalendar", "vcard", "ics", "vcf", "hcalendar"]
 
 dynamic = ["version"]
 dependencies = [
-    "python-dateutil >= 2.5.0; python_version < '3.10'",
-    "python-dateutil >= 2.7.0; python_version >= '3.10'",
+    "python-dateutil >= 2.7.0",
     "pytz >= 2019.1",
 ]
-requires-python = ">= 3.9"
+requires-python = ">= 3.10"
 authors = [
      {name = "Jeffrey Harris", email = "jeffrey@osafoundation.org"},
 ]
@@ -29,7 +28,6 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -81,7 +79,7 @@ include = [
 ]
 
 [tool.black]
-target-version = ["py39", "py310", "py311", "py312", "py313", "py314", "py315"]
+target-version = ["py310", "py311", "py312", "py313", "py314", "py315"]
 line-length = 120
 skip-magic-trailing-comma = true
 
@@ -98,8 +96,9 @@ multi_line_output = 3
 
 [tool.tox]
 requires = ["tox>=4.19"]
-# Keep in sync with the matrix in .github/workflows/test.yml.
-env_list = ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
+# Keep in sync with the matrix in .github/workflows/test.yml, and with
+# default_language_version in .pre-commit-config.yaml.
+env_list = ["3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
 
 [tool.tox.env_run_base]
 description = "Run test under {base_python}"

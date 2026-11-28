@@ -1,3 +1,9 @@
+# Run all hooks on the oldest supported CPython.  Bump this, and black's
+# --target-version below, along with the test matrix in
+# .github/workflows/test.yml and env_list in pyproject.toml.
+default_language_version:
+  python: python3.10
+
 repos:
   - repo: https://github.com/PyCQA/isort
     rev: 8.0.1
@@ -10,7 +16,7 @@ repos:
       - id: black
         args:
           [
-            "--target-version=py39",
+            "--target-version=py310",
           ]
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -28,13 +34,12 @@ repos:
       - id: flake8
         additional_dependencies: [ flake8-pyproject ]
 
-  - repo: local
+  - repo: https://github.com/pylint-dev/pylint
+    rev: v4.1.4
     hooks:
       - id: pylint
-        name: pylint
-        entry: pylint
-        language: system
-        types: [ python ]
+        # Lets pylint import vobject's own dependencies.
+        additional_dependencies: [ python-dateutil, pytz ]
         args:
           [
             "-rn", # Only display messages
